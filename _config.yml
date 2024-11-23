@@ -21,7 +21,7 @@ title                    : "Atılım Atılgan, PhD."
 title_separator          : "-"
 subtitle                 : # site tagline that appears below site title in masthead
 name                     : "Atılım Atılgan"
-description              : "An amazing website."
+description              : "Faculty member of the Department of Audiology, Istanbul Medeniyet University."
 url                      : # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 baseurl                  : # the subpath of your site, e.g. "/blog"
 repository               : # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
@@ -113,15 +113,15 @@ analytics:
 
 # Site Author
 author:
-  name             : "Your Name"
+  name             : "Atılım Atılgan, PhD."
   avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : "I am an **amazing** person."
-  location         : "Somewhere"
-  email            :
+  bio              : "I am currently a faculty member in the Department of Audiology at the Faculty of Health Sciences of Istanbul Medeniyet University. I give lectures about auditory electrophysiology, hearing aids and cochlear implants. I have conducted studies to reveal the differences in cochlear implant outcomes in specific groups. My recent interests involve identifying clinical biomarkers for better diagnosis using routine audiological tools. Additionally, I focus on cochlear hearing loss and related concepts such as cochlear synaptopathy, loudness perception, tinnitus, and efferent auditory projections."
+  location         : "Istanbul"
+  email            : atilimatilgan@gmail.com
   links:
     - label: "Email"
       icon: "fas fa-fw fa-envelope-square"
-      # url: "mailto:your.name@email.com"
+      # url: "mailto:atilimatilgan@gmail.com"
     - label: "Website"
       icon: "fas fa-fw fa-link"
       # url: "https://your-website.com"
