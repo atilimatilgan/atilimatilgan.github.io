@@ -2,7 +2,7 @@
 layout: about
 title: about
 permalink: /
-subtitle: <a href='#'>Faculty member of the Department of Audiology, Istanbul Medeniyet University.</a>,
+subtitle: "<a href='https://odyoloji.medeniyet.edu.tr/en' target='_blank'>Faculty member of the Department of Audiology, Istanbul Medeniyet University.</a>"
 
 profile:
   align: right
