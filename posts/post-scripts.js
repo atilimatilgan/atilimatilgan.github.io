@@ -2,8 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Load header for blog posts
     const headerNav = document.querySelector("header .nav");
     if (headerNav) {
-        // Use relative path for blog posts
-        fetch('../header.html')
+        // Use blog post specific header
+        fetch('post-header.html')
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Network response was not ok: ${response.statusText}`);
