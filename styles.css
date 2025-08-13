@@ -1,0 +1,806 @@
+/* Genel Stil Temelleri */
+:root {
+    --primary-color: #000;
+    --bg-color: #ffffff;
+    --text-color: #333;
+    --divider-color: #e0e0e0;
+    --notion-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
+    --notion-text-size: 16px;
+    --notion-text-color: rgb(55, 53, 47);
+    --notion-bg: #ffffff;
+    --notion-header-color: rgb(55, 53, 47);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #ffffff;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Container - Eski tam ekran yapısı daraltıldı */
+.container {
+    display: flex;
+    max-width: 1200px;
+    margin: 80px auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+}
+
+/* Kolonlar */
+.column {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    font-family: Arial, "Times New Roman", serif;
+    color: var(--text-color);
+}
+
+.column--left {
+    text-align: left;
+    direction: ltr;
+    background-color: var(--bg-color);
+}
+
+.column--right {
+    text-align: right;
+    direction: rtl;
+    background-color: var(--bg-color);
+}
+
+/* Ortadaki Dikey Bölücü */
+.divider {
+    width: 1px;
+    background: linear-gradient(to bottom, var(--primary-color), transparent);
+    /* Gradientin scroll ile efekt vermesi için JS ile background-position ayarlanacaktır */
+}
+
+/* Bölümlerin Temel Stili ve Animasyon */
+.section {
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.section.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.section h1, .section h2 {
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.section p {
+    line-height: 1.6;
+}
+
+/* Mobile - 768px altı için kolonların stack olması */
+@media screen and (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    .divider {
+        display: none;
+    }
+}
+
+/* Webkit Scrollbar Stilleri */
+.column::-webkit-scrollbar {
+    width: 8px;
+}
+
+.column::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 4px;
+}
+
+/* Header ve Menü Stilleri */
+.header {
+    background: #cceeff;
+    padding: 10px 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.nav__list {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+}
+
+.nav__item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.nav__separator {
+    margin: 0 5px;
+    color: #333;
+}
+
+.nav__link {
+    font-size: 1.2rem;
+    color: #333;
+    text-decoration: none;
+}
+
+.nav__link:hover {
+    text-decoration: underline;
+}
+
+.nav__link.active {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+/* Sidebar ve Main Content Stilleri */
+.sidebar {
+    width: 300px;
+    padding: 20px;
+    background-color: #f7f7f7;
+    color: #333;
+    border-right: 1px solid #e0e0e0;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #ffffff;
+}
+
+/* Profil ve Sosyal Ağ Stilleri */
+.profile {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.profile__img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e0e0e0;
+}
+
+.profile__name {
+    margin-top: 10px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.profile__title {
+    font-weight: 300;
+}
+
+.profile__email {
+    display: block;
+    margin-top: 5px;
+    font-weight: 300;
+    font-size: 1rem;
+    color: #000;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.profile__email:hover {
+    color: #666;
+}
+
+/* Sosyal Ağ Listesi */
+.social__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.social__item {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    font-size: 0.9rem;
+}
+
+.social__item i {
+    margin-right: 8px;
+    font-size: 1.2rem;
+    color: #000;
+}
+
+.social__link {
+    color: #000;
+    text-decoration: none;
+}
+
+.social__link:hover {
+    text-decoration: underline;
+}
+
+/* Sidebar özel link ve ikon renkleri */
+.sidebar .social__link {
+    color: #000;
+}
+
+.sidebar .social__link:hover {
+    text-decoration: underline;
+}
+
+.sidebar .social__item i {
+    color: #000;
+}
+
+/* Sidebar Icon Placeholder Definitions */
+.icon-scholar::before {
+    content: "⭐";
+    margin-right: 5px;
+}
+
+.icon-researchgate::before {
+    content: "🔬";
+    margin-right: 5px;
+}
+
+/* Custom ikon placeholder tanımlamaları (Google Scholar ve ResearchGate için) */
+.icon-location::before {
+    content: "📍";
+    margin-right: 5px;
+}
+
+.icon-university::before {
+    content: "🎓";
+    margin-right: 5px;
+}
+
+.icon-github::before {
+    content: "🐙";
+    margin-right: 5px;
+}
+
+.icon-orcid::before {
+    content: "⭕";
+    margin-right: 5px;
+}
+
+/* Yeni: Sosyal buton stil tanımlamaları */
+.social__btn {
+    display: inline-block;
+    font-size: 1.8rem;
+    margin: 5px;
+    color: #000;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.social__btn:hover {
+    transform: scale(1.1);
+}
+
+/* Sosyal ikon stil */
+.social__icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.social__text {
+    font-size: 1.2rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: #000;
+}
+
+/* Intro bölümü stilleri */
+.intro__title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.intro__content {
+    display: flex;
+    gap: 0;
+    align-items: flex-start;
+    border-radius: 8px;
+    background: #fff;
+    border-bottom: 2px solid #000;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+}
+
+.intro__text {
+    flex: 1;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    padding: 20px 30px;
+}
+
+.intro__text--tr {
+    text-align: right;
+}
+
+.intro__text--en {
+    text-align: left;
+}
+
+.intro__divider {
+    width: 2px;
+    height: 100%;
+    align-self: stretch;
+    background: #000000;
+    margin: 0;
+    border-radius: 1px;
+    box-shadow: -1px 0 2px rgba(0, 0, 0, 0.1), 1px 0 2px rgba(0, 0, 0, 0.1);
+    position: relative;
+    opacity: 0.8;
+}
+
+.intro__divider::before,
+.intro__divider::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    background: #000;
+    border-radius: 50%;
+    transform: translateX(-50%);
+}
+
+.intro__divider::before {
+    top: -3px;
+}
+
+.intro__divider::after {
+    bottom: -3px;
+}
+
+.intro__text p {
+    margin-bottom: 15px;
+}
+
+/* Yeni: Intro Başlık Stili */
+.intro__heading {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Publications Styles */
+.publications {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px;
+}
+
+.publications__header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.publications__metrics {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 30px;
+}
+
+.metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.metric__number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #000;
+}
+
+.metric__label {
+    font-size: 1rem;
+    color: #666;
+}
+
+.publication {
+    padding: 30px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.3s ease;
+}
+
+.publication:hover {
+    background-color: #f8f8f8;
+}
+
+.publication__header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.publication__icon {
+    font-size: 1.5rem;
+    color: #666;
+    margin-top: 0.2rem;
+    width: 24px;
+    text-align: center;
+}
+
+/* Kitap bölümleri için farklı ikon */
+.publication[data-tags="book-chapter"] .publication__icon::before {
+    content: "\f518";  /* fa-book-open ikonu */
+}
+
+.publication__title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.publication__authors {
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.publication__journal {
+    color: #888;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+.publication__citations {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Blog Styles */
+.blog {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.blog__title {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.blog__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 40px;
+    justify-content: center;
+}
+
+.tag {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    background: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tag.active {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+.post {
+    margin-bottom: 40px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Post Header Stili - Yayınlardaki gibi */
+.post__header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.post__icon {
+    font-size: 1.5rem;
+    color: #666;
+    margin-top: 0.2rem;
+    width: 24px;
+    text-align: center;
+}
+
+.post__title {
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.post__meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.post__tags {
+    display: flex;
+    gap: 8px;
+}
+
+.post__tag {
+    padding: 4px 8px;
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.post__excerpt {
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.post__link {
+    color: #000;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.post__link:hover {
+    text-decoration: underline;
+}
+
+.post--preview {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--divider-color);
+}
+
+/* Post tarih stili */
+.post__date {
+    display: inline-flex;
+    align-items: center;
+    color: #555;
+    font-size: 0.95rem;
+    margin-bottom: 1.2rem;
+    padding: 0.4rem 0.8rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+    font-family: var(--notion-font);
+}
+
+.post__date::before {
+    content: "📅";
+    margin-right: 0.5rem;
+    font-size: 1rem;
+}
+
+.post__link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.post__link:hover {
+    color: #007bff;
+}
+
+.post__excerpt {
+    color: #666;
+    margin: 1rem 0;
+    line-height: 1.6;
+}
+
+.post--full {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem calc(5rem + 2cm);
+    font-family: var(--notion-font);
+    color: var(--notion-text-color);
+    background: var(--notion-bg);
+}
+
+/* Tam metin görünümünde tarih stili */
+.post--full .post__date {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    padding: 0.5rem 1rem;
+    background-color: #f8f9fa;
+    border-left: 3px solid #007bff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Tam metin header düzeni */
+.post--full .post__header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Tam metin için blog icon */
+.post--full .post__icon {
+    width: 50px;
+    height: 50px;
+}
+
+/* Tam metin başlık stili */
+.post--full .post__title {
+    font-size: 2.4rem;
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* Tam metin içerik alanı */
+.post--full .post__content {
+    margin-top: 2rem;
+    line-height: 1.7;
+    font-size: 18px;
+    text-align: justify;
+    max-width: none;
+    width: 100%;
+}
+
+.post--full .post__content h2 {
+    margin: 2rem 0 1rem;
+    font-size: 1.8em;
+    font-weight: 600;
+    color: var(--notion-header-color);
+}
+
+.post--full .post__content h3 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin: 1.5rem 0 1rem;
+    color: var(--notion-header-color);
+}
+
+.post--full .post__content p {
+    margin-bottom: 1rem;
+    font-size: 18px;
+    color: var(--notion-text-color);
+    text-align: justify;
+    line-height: 1.7;
+}
+
+.post--full .post__quote {
+    background: rgba(235, 236, 237, 0.6);
+    border-left: 3px solid rgb(55, 53, 47);
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    font-size: 18px;
+    color: var(--notion-text-color);
+    text-align: justify;
+    line-height: 1.7;
+}
+
+.post--full strong {
+    font-weight: 600;
+    color: var(--notion-header-color);
+    background: rgba(235, 236, 237, 0.6);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+}
+
+/* Yeni: Gizleme sınıfı */
+.hidden {
+    display: none !important;
+}
+
+/* Yeni: Blog simge stili */
+.post__icon {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+/* Yeni: Post Başlık Satırı - simge ve başlık aynı hizada */
+.post__title-row {
+    display: flex;
+    align-items: center;
+}
+
+/* Blog ve Günce için ortak container stili */
+.container {
+    display: flex;
+    max-width: 1200px;
+    margin: 80px auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+}
+
+/* Konuşmalarım (Talks) Bölümü Stilleri */
+.talks {
+    padding: 40px 20px;
+}
+
+.talks__title {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.talks__list {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.talk {
+    padding: 30px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.3s ease;
+}
+
+.talk:hover {
+    background-color: #f8f8f8;
+}
+
+.talk__header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.talk__icon {
+    font-size: 1.5rem;
+    color: #666;
+    width: 24px;
+    text-align: center;
+}
+
+.talk__title {
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.talk__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #666;
+    align-items: center;
+}
+
+.talk__date {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+    font-family: var(--notion-font);
+} 

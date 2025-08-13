@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Atılım Atılgan</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <ul class="nav__list">
+                <li class="nav__item">
+                    <a href="index.html" class="nav__link">me</a>
+                    <span class="nav__separator"> I </span>
+                    <a href="index.html" class="nav__link">ben</a>
+                </li>
+                <li class="nav__item">
+                    <a href="blog.html" class="nav__link">blog</a>
+                </li>
+                <li class="nav__item">
+                    <a href="gunce.html" class="nav__link">günce</a>
+                </li>
+                <li class="nav__item">
+                    <a href="talks.html" class="nav__link">talks</a>
+                    <span class="nav__separator"> I </span>
+                    <a href="talks.html" class="nav__link">konuşmalar</a>
+                </li>
+                <li class="nav__item">
+                    <a href="teaching.html" class="nav__link">teaching</a>
+                    <span class="nav__separator"> I </span>
+                    <a href="teaching.html" class="nav__link">ders</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <main class="blog">
+            <h1 class="blog__title">Blog</h1>
+            
+            <div class="blog__tags">
+                <button class="tag active" data-tag="all">All</button>
+                <button class="tag" data-tag="Research">Research</button>
+                <button class="tag" data-tag="Tech">Tech</button>
+                <button class="tag" data-tag="Science">Science</button>
+            </div>
+
+            <div class="blog__posts">
+                <article class="post" data-tags="research,audiology">
+                    <h2 class="post__title">Latest Research on Cochlear Implants</h2>
+                    <div class="post__meta">
+                        <time class="post__date">2024-03-15</time>
+                        <div class="post__tags">
+                            <span class="post__tag">Research</span>
+                            <span class="post__tag">Audiology</span>
+                        </div>
+                    </div>
+                    <p class="post__excerpt">Recent developments in cochlear implant technology...</p>
+                    <a href="#" class="post__link">Read more</a>
+                </article>
+
+                <!-- Diğer blog yazıları buraya eklenecek -->
+            </div>
+        </main>
+    </div>
+    <script src="scripts.js"></script>
+    <script src="blog.js"></script>
+</body>
+</html> 

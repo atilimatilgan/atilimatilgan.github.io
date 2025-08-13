@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Günce - Atılım Atılgan</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <ul class="nav__list">
+                <li class="nav__item">
+                    <a href="index.html" class="nav__link">me</a>
+                    <span class="nav__separator"> I </span>
+                    <a href="index.html" class="nav__link">ben</a>
+                </li>
+                <li class="nav__item">
+                    <a href="blog.html" class="nav__link">blog</a>
+                </li>
+                <li class="nav__item">
+                    <a href="gunce.html" class="nav__link">günce</a>
+                </li>
+                <li class="nav__item">
+                    <a href="talks.html" class="nav__link">talks</a>
+                    <span class="nav__separator"> I </span>
+                    <a href="talks.html" class="nav__link">konuşmalar</a>
+                </li>
+                <li class="nav__item">
+                    <a href="teaching.html" class="nav__link">teaching</a>
+                    <span class="nav__separator"> I </span>
+                    <a href="teaching.html" class="nav__link">ders</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <main class="blog">
+            <h1 class="blog__title">Günce</h1>
+            
+            <div class="blog__tags">
+                <button class="tag active" data-tag="all">Tümü</button>
+                <button class="tag" data-tag="Notebooklm">Notebooklm</button>
+                <button class="tag" data-tag="Düşünce">Düşünce</button>
+                <button class="tag" data-tag="Müzik">Müzik</button>
+                <button class="tag" data-tag="Odyoloji">Odyoloji</button>
+                <button class="tag" data-tag="Satranç">Satranç</button>
+            </div>
+
+            <div class="blog__posts">
+                <!-- Post Preview -->
+                <article class="post post--preview" data-tag="Notebooklm" id="ozgur-irade-preview">
+                    <time class="post__date">9 Şubat 2025</time>
+                    <header class="post__header">
+                        <img class="post__icon" src="images/blog.png" alt="Blog Icon">
+                        <h1 class="post__title">
+                            <a href="#" class="post__link" onclick="showFullPost('ozgur-irade'); return false;">
+                                Özgür İrade Sorunsalı
+                            </a>
+                        </h1>
+                    </header>
+                    <div class="post__excerpt">
+                        Özgür irade genellikle, farklı şekilde davranabilme yeteneğimiz olarak tanımlanır. Başka bir deyişle, zamanı geriye alabilseydik, tamamen kendi kontrolümüz dahilinde olan farklı bir seçim yapabilirdik. Bununla birlikte, bu fikirle ilgili birçok sorun vardır...
+                    </div>
+                    <footer class="post__footer">
+                        <span class="post__tag">Notebooklm</span>
+                    </footer>
+                </article>
+                
+                <!-- Full Post Content (initially hidden) -->
+                <article class="post post--full hidden" data-tag="Notebooklm" id="ozgur-irade-full">
+                    <time class="post__date">9 Şubat 2025</time>
+                    <header class="post__header">
+                        <img class="post__icon" src="images/blog.png" alt="Blog Icon">
+                        <h1 class="post__title">
+                            Özgür İrade Sorunsalı
+                        </h1>
+                    </header>
+                    <blockquote class="post__quote">
+                        Bu metin konuyla ilgili bir çok video, podcast kaynaklarından derlendi. Google Notebooklm üretken yapay zeka tarafından oluşturuldu. Makalenin düzenlemesini ben yaptım. Metini okurken bu durumu dikkate almanızı öneririm.
+                    </blockquote>
+                    <div class="post__content">
+                        <h2>Özgür irade nedir?</h2>
+                        <p>Özgür irade genellikle, farklı şekilde davranabilme yeteneğimiz olarak tanımlanır. Başka bir deyişle, zamanı geriye alabilseydik, tamamen kendi kontrolümüz dahilinde olan farklı bir seçim yapabilirdik.</p>
+
+                        <h2>Özgür İrade var mıdır?</h2>
+                        <p>Bununla birlikte, bu fikirle ilgili birçok sorun vardır. İlk olarak, kararlarımızı etkileyen tüm faktörlerin (çevresel faktörler, ruh halimiz, diğer insanların etkisi, geçmiş deneyimlerimiz vb.) farkında olmamız gerekir. İkinci olarak, bunların her biri üzerinde tam kontrole sahip olmamız gerekir. Bunların hiçbiri ne doğrudur ne de mümkündür.</p>
+                        <p>Seçimlerimiz, bilinçli benliğimizden ziyade geçmiş deneyimlerimiz, genlerimiz ve çevremiz tarafından belirlenir.</p>
+
+                        <h2>Beynimiz kararlarımızı nasıl etkiler?</h2>
+                        <p>Beynimiz, sürekli olarak bilgiyi işleyen ve kararlar alan karmaşık bir organdır. Seçimlerimiz, bilinçli farkındalığımız olmadan gerçekleşen nöronal aktivite modelleri tarafından belirlenir.</p>
+                        <p>Örneğin, bir çalışmada katılımcılardan parmaklarını hareket ettirmeleri istendiğinde, beyin taramaları, bilinçli olarak hareket etme kararını vermelerinden önce beyin aktivitesinde bir artış olduğunu gösterdi. Bu, kararın bilinçli olarak verilmeden önce bilinçaltı düzeyde zaten verildiğini göstermektedir.</p>
+                        <p>Nörobiyoloji, karar verme süreçlerinde yer alan beyin mekanizmalarına dair anlayışımızı artırmıştır. Çalışmalar, seçimlerimizin bilinçli farkındalığımız olmadan gerçekleşen nöronal aktivite modelleri tarafından belirlendiğini göstermiştir. Bu, kararlarımızın kontrolümüz dışında olan faktörler tarafından yönlendirildiğini göstermektedir.</p>
+                        <p><strong>Benjamin Libet'in deneyi</strong> gibi sinirbilimsel çalışmalar, bilinçli kararlarımızın aslında beyinde, biz farkında olmadan önce başladığını gösteriyor. Bu bulgular, özgür irade deneyimimizin, gerçekte bir yanılsama olabileceği fikrini destekliyor.</p>
+
+                        <blockquote class="post__quote">
+                            "Konu deneklerin görevi, istedikleri zaman bileklerini bükmek ve büktükten sonra, bükme dürtüsünü, niyetini, isteğini, iradesini veya kararını ilk hissettiklerinde çok hızlı bir saatte bir noktanın nerede olduğunu bildirmekti ve iki makineye bağlıydılar, böylece kafa derisinden EEG okumaları ve bir elektromiyografi ile kas hareket okumaları alıyorlardı ve keşfettiği şey, deneklere ne zaman esneyeceklerini önceden planlamamaları düzenli olarak hatırlatıldığında, kas patlamasından 550 milisaniye önce başlayan bir EEG artışı elde edildiğidir, bu yaklaşık yarım saniyedir ve bu beyin açısından uzun bir zamandır, yarım saniye, oh, elbette şimdi Ortalama"
+                        </blockquote>
+
+                        <p>Ayrık beyin ameliyatı, beynin iki yarım küresini birbirine bağlayan korpus kallosumunun kesilmesiyle iletişimin engellendiği için, özgür irade kavramını anlamamıza yardımcı olan önemli bir cerrahi işlemdir. Bu ameliyat genellikle şiddetli epilepsi vakalarında nöbetleri azaltmak amacıyla kullanılır. İlginç bir şekilde, ayrık beyin ameliyatı geçiren hastalar genellikle normal yaşamlarına devam edebilmekte ve kişiliklerinde kayda değer bir değişiklik göstermemektedir.</p>
+
+                        <h2>Determinizm nedir ve özgür iradeye inancı nasıl etkiler?</h2>
+                        <p>Determinizm, her olayın önceki olaylar zinciri tarafından önceden belirlendiği inancıdır. Bu, evrenin en başından itibaren belirlenmiş bir yolda ilerlediği ve tüm eylemlerimizin önceden belirlendiği anlamına gelir.</p>
+                        <p>Eğer determinizm doğruysa, o zaman gerçek bir serbest irade olamaz. Seçimlerimiz, kendi kontrolümüzden ziyade evrenin başlangıç koşulları tarafından belirlenir.</p>
+
+                        <h2>Kuantum mekaniği özgür irade fikrini destekliyor mu?</h2>
+                        <p>Bazı insanlar kuantum mekaniğinin, evrenin doğası gereği belirsiz olduğu için serbest iradeye dair kanıt sağladığını iddia eder. Bununla birlikte, kuantum mekaniğindeki rastgelelik, kararlarımızın bilinçli kontrolümüz altında olduğunu göstermez. Sadece kararlarımızın önceden belirlenmiş olmadığını, bunun yerine rastgele olduğunu gösterir.</p>
+
+                        <h2>Kompatibilizm nedir ve özgür iradeyle ilgili tartışmayı nasıl ele alır?</h2>
+                        <p>Kompatibilizm, determinizmin serbest irade ile uyumlu olduğu inancıdır. Kompatibilistler, eylemlerimizin belirlenmiş olabileceğini, ancak yine de eylemlerimizin kendi isteklerimiz ve arzularımızla uyumlu olması anlamında özgür olduğumuzu savunurlar.</p>
+
+                        <h2>Özgür İradeyi Açıklamada Kompatibilizm ve Liberteryenizmin Başarısı</h2>
+                        <p>Kaynaklar, özgür iradeyi açıklamada iki temel felsefi yaklaşımı ele alıyor: <strong>kompatibilizm</strong> ve <strong>liberteryenizm</strong>. Bu yaklaşımların her ikisi de, bilim insanları tarafından sıklıkla dile getirilen özgür iradenin bir yanılsama olduğu iddiasına karşı çıkmaktadır.</p>
+
+                        <h2>Özgür iradenin yokluğu toplumumuzu nasıl etkiler?</h2>
+                        <p>Özgür iradeye inancın olmamasının ahlaki sorumluluğu baltalayabileceği ve hukuk sistemini zayıflatabileceğinden endişe ediyor. Ancak, özgür iradeye inanmasak bile, insanların eylemlerinden sorumlu tutulmaları için hala pratik nedenlerimiz var.</p>
+
+                        <h3>Empati ve Şefkat</h3>
+                        <p>Özgür irade yanılsaması, insanları başkalarının eylemlerini yargılamaya ve onları ahlaki açıdan suçlu bulmaya yönlendirebilir. Sapolsky, insanların davranışlarının biyolojik ve çevresel faktörlerin karmaşık bir etkileşiminin sonucu olduğunu anladığımızda, <strong>empati ve şefkat</strong> geliştirmenin daha kolay olacağını savunuyor.</p>
+
+                        <h2>Özgür iradeyi yeniden nasıl düşünebiliriz?</h2>
+                        <p>Özgür iradeye ikili bir inançtan ziyade, onu farklı dereceleri olan bir yelpaze olarak düşünmek daha faydalı olabilir. Eylemlerimizin bir kısmı bilinçli kontrolümüz altındayken, bir kısmı da öyle değildir. Serbest irademizin sınırlarını anlamak, daha bilinçli kararlar vermemize ve yaşamlarımızda daha fazla sorumluluk almamıza yardımcı olabilir.</p>
+                    </div>
+                    <footer class="post__footer">
+                        <span class="post__tag">Notebooklm</span>
+                    </footer>
+                </article>
+            </div>
+        </main>
+    </div>
+    <script src="scripts.js"></script>
+    <script src="blog.js"></script>
+</body>
+</html> 

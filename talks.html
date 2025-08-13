@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Konuşmalarım - Atılım Atılgan</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+      <nav class="nav">
+          <ul class="nav__list">
+              <li class="nav__item">
+                  <a href="index.html" class="nav__link">me</a>
+                  <span class="nav__separator"> I </span>
+                  <a href="index.html" class="nav__link">ben</a>
+              </li>
+              <li class="nav__item">
+                  <a href="blog.html" class="nav__link">blog</a>
+              </li>
+              <li class="nav__item">
+                  <a href="gunce.html" class="nav__link">günce</a>
+              </li>
+              <li class="nav__item">
+                  <a href="talks.html" class="nav__link">talks</a>
+                  <span class="nav__separator"> I </span>
+                  <a href="talks.html" class="nav__link">konuşmalar</a>
+              </li>
+              <li class="nav__item">
+                  <a href="teaching.html" class="nav__link">teaching</a>
+                  <span class="nav__separator"> I </span>
+                  <a href="teaching.html" class="nav__link">ders</a>
+              </li>
+          </ul>
+      </nav>
+  </header>
+
+  <div class="container">
+      <main class="talks">
+          <h1 class="talks__title">Konuşmalarım</h1>
+          <div class="talks__list">
+              
+              <!-- En yeni tarih üstte olacak şekilde sıralanmış örnekler -->
+              
+              <article class="talk" data-date="2023-12-21">
+                  <header class="talk__header">
+                      <span class="talk__icon">🎤</span>
+                      <h2 class="talk__title">Panel: Istanbul Medeniyet Üniversitesi Cevizli Kampüsü</h2>
+                  </header>
+                  <div class="talk__meta">
+                      <span class="talk__scope">Ulusal</span>
+                      <time class="talk__date">21.12.2023</time>
+                      <span class="talk__venue">Istanbul Medeniyet Üniversitesi Cevizli Kampüsü</span>
+                  </div>
+              </article>
+              
+              <article class="talk" data-date="2023-09-14">
+                  <header class="talk__header">
+                      <span class="talk__icon">🎤</span>
+                      <h2 class="talk__title">Panel: Hearing Aids vs CI: The Grey Zone</h2>
+                  </header>
+                  <div class="talk__meta">
+                      <span class="talk__scope">Uluslararası</span>
+                      <time class="talk__date">14.09.2023 - 16.09.2023</time>
+                      <span class="talk__venue">7th World Congress on Cochlear Implants in Emerging Nations, Istanbul</span>
+                  </div>
+              </article>
+              
+              <article class="talk" data-date="2022-06-04">
+                  <header class="talk__header">
+                      <span class="talk__icon">🎤</span>
+                      <h2 class="talk__title">Konferans: 3. Oto-Odyoloji Kongresi, İstanbul</h2>
+                  </header>
+                  <div class="talk__meta">
+                      <span class="talk__scope">Ulusal</span>
+                      <time class="talk__date">04.06.2022 - 05.06.2022</time>
+                      <span class="talk__venue">İstanbul</span>
+                  </div>
+              </article>
+              
+              <!-- Diğer konuşma öğelerini de aynı formatta ekleyip, data-date özelliğiyle sıralamayı sağlayabilirsiniz -->
+              
+          </div>
+      </main>
+  </div>
+  <script src="scripts.js"></script>
+</body>
+</html> 
