@@ -916,4 +916,30 @@ body {
 
 .philosophy-content p:last-child {
     margin-bottom: 0;
+}
+
+/* Blog Post Figure Styles */
+.post__figure {
+    margin: 30px 0;
+    text-align: center;
+}
+
+.post__image {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.post__caption {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.5;
+    font-style: italic;
+    text-align: left;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 } 
