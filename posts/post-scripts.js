@@ -2,8 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Load header for blog posts
     const headerNav = document.querySelector("header .nav");
     if (headerNav) {
-        // Use absolute path for blog posts
-        fetch('/header.html')
+        // Use relative path for blog posts
+        fetch('../header.html')
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Network response was not ok: ${response.statusText}`);
@@ -26,13 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch(error => {
                 console.error('Failed to fetch header:', error);
-                // Fallback: try relative path
-                fetch('../header.html')
-                    .then(response => response.text())
-                    .then(html => {
-                        headerNav.innerHTML = html;
-                    })
-                    .catch(err => console.error('Failed to fetch header with fallback:', err));
             });
     }
 });
