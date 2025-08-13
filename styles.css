@@ -803,4 +803,117 @@ body {
     border-radius: 4px;
     border-left: 3px solid #007bff;
     font-family: var(--notion-font);
+}
+
+/* Teaching Sayfası Stilleri */
+.teaching-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.teaching-section {
+    margin-bottom: 40px;
+}
+
+.teaching-section__title {
+    font-size: 1.8rem;
+    color: var(--notion-header-color);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.course-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.course-item {
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fafafa;
+    transition: all 0.3s ease;
+}
+
+.course-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.course-item__title {
+    font-size: 1.3rem;
+    color: var(--notion-header-color);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.course-item__description {
+    color: var(--notion-text-color);
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.course-item__details {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.course-item__level,
+.course-item__semester {
+    padding: 4px 12px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.course-item__semester {
+    background-color: #28a745;
+}
+
+.research-areas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.research-area {
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.research-area__title {
+    font-size: 1.2rem;
+    color: var(--notion-header-color);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.research-area p {
+    color: var(--notion-text-color);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.philosophy-content {
+    background-color: #f8f9fa;
+    padding: 25px;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.philosophy-content p {
+    color: var(--notion-text-color);
+    line-height: 1.7;
+    margin-bottom: 15px;
+}
+
+.philosophy-content p:last-child {
+    margin-bottom: 0;
 } 
