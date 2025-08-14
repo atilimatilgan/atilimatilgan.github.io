@@ -757,6 +757,57 @@ body {
     gap: 30px;
 }
 
+/* Talks table layout */
+.talks__table-wrapper {
+    padding: 20px;
+}
+
+.talks-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--notion-font);
+}
+
+.talks-table thead th {
+    position: sticky;
+    top: 0;
+    background: #fafafa;
+    z-index: 1;
+}
+
+.talks-table th, .talks-table td {
+    border: 1px solid #e6e6e6;
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.talks-table tbody tr:nth-child(odd) {
+    background-color: #fcfcfc;
+}
+
+.talks-table tbody tr:hover {
+    background-color: #f4f8ff;
+}
+
+.talks-table th {
+    font-weight: 600;
+    color: #333;
+}
+
+.talks-table td {
+    color: var(--notion-text-color);
+}
+
+@media (max-width: 768px) {
+    .talks-table {
+        font-size: 0.9rem;
+    }
+    .talks-table th, .talks-table td {
+        padding: 8px 10px;
+    }
+}
+
 .talk {
     padding: 30px;
     border-bottom: 1px solid #eee;
