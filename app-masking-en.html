@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masking Decision Laboratory - Atılım Atılgan</title>
+    <link rel="stylesheet" href="styles.css?v=1.1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Specific override for full width app page */
+        .container.app-view {
+            display: block;
+            /* Remove flex/grid sidebar layout */
+            max-width: 1200px;
+            margin: 80px auto 0;
+            /* Top margin for fixed header */
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <nav class="nav">
+            <ul class="nav__list">
+                <li class="nav__item"><a href="index.html" class="nav__link">Home</a></li>
+                <li class="nav__separator">/</li>
+                <li class="nav__item"><a href="course-fundamentals-of-audiology.html" class="nav__link">Fundamentals of
+                        Audiology</a></li>
+                <li class="nav__separator">/</li>
+                <li class="nav__item"><a href="#" class="nav__link active">Masking Decision Lab</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container app-view">
+        <div class="masking-app">
+
+            <div class="masking-app-header">
+                <div>
+                    <h1 class="masking-app-title">Masking Decision Laboratory</h1>
+                    <p class="masking-app-subtitle">Create a case, make your decision, and check.</p>
+                </div>
+                <div>
+                    <button id="resetBtn" class="masking-btn-reset">
+                        <i class="fas fa-rotate-left"></i> Reset
+                    </button>
+                </div>
+            </div>
+
+            <div class="masking-layout">
+
+                <!-- LEFT PANEL: Controls -->
+                <div class="left-col">
+
+                    <!-- Transducer Selection -->
+                    <div class="masking-panel">
+                        <h3><i class="fas fa-headphones"></i> Transducer Type (IA)</h3>
+                        <div class="transducer-toggle">
+                            <button class="transducer-btn supra active" data-type="supra">Supra (40dB)</button>
+                            <button class="transducer-btn insert" data-type="insert">Insert (50dB)</button>
+                        </div>
+                    </div>
+
+                    <!-- Threshold Sliders -->
+                    <div class="masking-panel">
+                        <h3><i class="fas fa-sliders"></i> Create Case (Thresholds)</h3>
+
+                        <!-- Right Ear -->
+                        <div class="slider-group right-ear-section">
+                            <span class="slider-title">RIGHT EAR</span>
+
+                            <!-- Right AC -->
+                            <div class="slider-label">
+                                <span>Air (O)</span>
+                                <span class="slider-val" id="val-rightAC">40 dB</span>
+                            </div>
+                            <input type="range" class="ac-slider" id="rightAC" min="-10" max="120" step="5" value="40">
+
+                            <!-- Right BC -->
+                            <div class="slider-label" style="margin-top:0.5rem">
+                                <span>Bone (<)< /span>
+                                        <span class="slider-val" id="val-rightBC">10 dB</span>
+                            </div>
+                            <input type="range" class="bc-slider" id="rightBC" min="-10" max="120" step="5" value="10">
+                        </div>
+
+                        <!-- Left Ear -->
+                        <div class="slider-group left-ear-section">
+                            <span class="slider-title">LEFT EAR</span>
+
+                            <!-- Left AC -->
+                            <div class="slider-label">
+                                <span>Air (X)</span>
+                                <span class="slider-val" id="val-leftAC">10 dB</span>
+                            </div>
+                            <input type="range" class="ac-slider" id="leftAC" min="-10" max="120" step="5" value="10">
+
+                            <!-- Left BC -->
+                            <div class="slider-label" style="margin-top:0.5rem">
+                                <span>Bone (>)</span>
+                                <span class="slider-val" id="val-leftBC">10 dB</span>
+                            </div>
+                            <input type="range" class="bc-slider" id="leftBC" min="-10" max="120" step="5" value="10">
+                        </div>
+                    </div>
+
+                    <!-- Quiz Selection -->
+                    <div class="masking-panel quiz-panel">
+                        <h3><i class="fas fa-question-circle"></i> Which needs Masking?</h3>
+
+                        <div class="quiz-option" id="opt-rightAC" onclick="toggleSelection('rightAC')">
+                            <span>Right AC</span>
+                            <i class="far fa-square check-icon"></i>
+                        </div>
+                        <div class="quiz-option" id="opt-rightBC" onclick="toggleSelection('rightBC')">
+                            <span>Right BC</span>
+                            <i class="far fa-square check-icon"></i>
+                        </div>
+                        <div class="quiz-option" id="opt-leftAC" onclick="toggleSelection('leftAC')">
+                            <span>Left AC</span>
+                            <i class="far fa-square check-icon"></i>
+                        </div>
+                        <div class="quiz-option" id="opt-leftBC" onclick="toggleSelection('leftBC')">
+                            <span>Left BC</span>
+                            <i class="far fa-square check-icon"></i>
+                        </div>
+
+                        <button class="check-btn" onclick="checkAnswer()">CHECK</button>
+                    </div>
+
+                </div>
+
+                <!-- CENTER PANEL: Audiogram -->
+                <div class="center-col">
+                    <div class="audiogram-container">
+                        <div class="audiogram-grid" id="audiogramGrid">
+                            <!-- Grid lines generated by JS -->
+                            <div class="center-line"></div>
+
+                            <!-- Symbols -->
+                            <div class="symbol right-ac" id="sym-rightAC"></div>
+                            <div class="symbol right-bc" id="sym-rightBC">&lt;</div>
+                            <div class="symbol left-ac" id="sym-leftAC">X</div>
+                            <div class="symbol left-bc" id="sym-leftBC">&gt;</div>
+
+                            <!-- Cross Hearing Arrows (SVG) -->
+                            <svg id="crossHearingSvg" class="cross-hearing-line">
+                                <defs>
+                                    <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="0" refY="3.5"
+                                        orient="auto">
+                                        <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" opacity="0.6" />
+                                    </marker>
+                                    <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="10" refY="3.5"
+                                        orient="auto">
+                                        <polygon points="10 0, 0 3.5, 10 7" fill="#2563eb" opacity="0.6" />
+                                    </marker>
+                                </defs>
+                                <line id="arrow-right-to-left" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,5"
+                                    marker-end="url(#arrowhead-red)" style="display:none" />
+                                <line id="arrow-left-to-right" stroke="#2563eb" stroke-width="2" stroke-dasharray="5,5"
+                                    marker-end="url(#arrowhead-blue)" style="display:none" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT PANEL: Feedback -->
+                <div class="right-col">
+                    <div class="feedback-container">
+                        <div class="masking-panel" style="height:100%; display:flex; flex-direction:column;">
+                            <h3><i class="fas fa-clipboard-list"></i> Analysis Report</h3>
+
+                            <div id="feedback-waiting" class="feedback-placeholder">
+                                <i class="far fa-clock"></i>
+                                <p>Make your decision and<br>press 'CHECK'.</p>
+                            </div>
+
+                            <div id="feedback-result" class="feedback-result" style="display:none">
+                                <div id="feedback-summary" class="feedback-alert"></div>
+                                <div id="feedback-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        const state = {
+            transducer: 'supra',
+            thresholds: { rightAC: 40, rightBC: 10, leftAC: 10, leftBC: 10 },
+            interAural: 40,
+            selections: { rightAC: false, rightBC: false, leftAC: false, leftBC: false },
+            showResult: false
+        };
+
+        // Initialize
+        function init() {
+            renderGrid();
+            updateUI();
+            setupListeners();
+        }
+
+        // Setup Event Listeners
+        function setupListeners() {
+            document.querySelectorAll('.transducer-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const type = e.target.dataset.type;
+                    setTransducer(type);
+                });
+            });
+
+            ['rightAC', 'rightBC', 'leftAC', 'leftBC'].forEach(id => {
+                document.getElementById(id).addEventListener('input', (e) => {
+                    updateThreshold(id, parseInt(e.target.value));
+                });
+            });
+
+            document.getElementById('resetBtn').addEventListener('click', resetApp);
+        }
+
+        function setTransducer(type) {
+            state.transducer = type;
+            state.interAural = type === 'supra' ? 40 : 50;
+
+            document.querySelectorAll('.transducer-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.transducer-btn.${type}`).classList.add('active');
+
+            resetResult();
+        }
+
+        function updateThreshold(key, value) {
+            state.thresholds[key] = value;
+
+            if (key === 'rightAC' && value < state.thresholds.rightBC) { state.thresholds.rightBC = value; document.getElementById('rightBC').value = value; }
+            if (key === 'rightBC' && value > state.thresholds.rightAC) { state.thresholds.rightAC = value; document.getElementById('rightAC').value = value; }
+            if (key === 'leftAC' && value < state.thresholds.leftBC) { state.thresholds.leftBC = value; document.getElementById('leftBC').value = value; }
+            if (key === 'leftBC' && value > state.thresholds.leftAC) { state.thresholds.leftAC = value; document.getElementById('leftAC').value = value; }
+
+            updateUI();
+            resetResult();
+        }
+
+        function toggleSelection(key) {
+            state.selections[key] = !state.selections[key];
+            resetResult();
+            updateSelectionUI();
+        }
+
+        function updateSelectionUI() {
+            Object.keys(state.selections).forEach(key => {
+                const el = document.getElementById(`opt-${key}`);
+                const icon = el.querySelector('i');
+                const isSelected = state.selections[key];
+
+                if (isSelected) {
+                    if (key.includes('right')) el.classList.add('selected-red');
+                    else el.classList.add('selected-blue');
+                    icon.classList.remove('far', 'fa-square');
+                    icon.classList.add('fas', 'fa-check-square');
+                } else {
+                    el.classList.remove('selected-red', 'selected-blue');
+                    icon.classList.remove('fas', 'fa-check-square');
+                    icon.classList.add('far', 'fa-square');
+                }
+            });
+        }
+
+        function resetResult() {
+            state.showResult = false;
+            document.getElementById('feedback-waiting').style.display = 'flex';
+            document.getElementById('feedback-result').style.display = 'none';
+
+            document.querySelectorAll('.quiz-option').forEach(el => {
+                el.style.backgroundColor = '';
+                el.style.borderColor = '';
+            });
+            updateSelectionUI();
+
+            document.getElementById('arrow-right-to-left').style.display = 'none';
+            document.getElementById('arrow-left-to-right').style.display = 'none';
+        }
+
+        function resetApp() {
+            state.thresholds = { rightAC: 40, rightBC: 10, leftAC: 10, leftBC: 10 };
+            state.selections = { rightAC: false, rightBC: false, leftAC: false, leftBC: false };
+
+            document.getElementById('rightAC').value = 40;
+            document.getElementById('rightBC').value = 10;
+            document.getElementById('leftAC').value = 10;
+            document.getElementById('leftBC').value = 10;
+
+            updateUI();
+            resetResult();
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('audiogramGrid');
+            for (let i = 0; i < 14; i++) {
+                const db = (i * 10) - 10;
+                const line = document.createElement('div');
+                line.classList.add('grid-line');
+                line.style.top = `${(i * 35) + 20}px`;
+                line.textContent = db;
+                grid.appendChild(line);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('val-rightAC').innerText = state.thresholds.rightAC + ' dB';
+            document.getElementById('val-rightBC').innerText = state.thresholds.rightBC + ' dB';
+            document.getElementById('val-leftAC').innerText = state.thresholds.leftAC + ' dB';
+            document.getElementById('val-leftBC').innerText = state.thresholds.leftBC + ' dB';
+
+            const calcTop = (db) => ((db + 10) / 10 * 35) + 20;
+
+            const rAC = document.getElementById('sym-rightAC');
+            rAC.style.top = `${calcTop(state.thresholds.rightAC) - 10}px`;
+
+            const rBC = document.getElementById('sym-rightBC');
+            rBC.style.top = `${calcTop(state.thresholds.rightBC) - 18}px`;
+
+            const lAC = document.getElementById('sym-leftAC');
+            lAC.style.top = `${calcTop(state.thresholds.leftAC) - 18}px`;
+
+            const lBC = document.getElementById('sym-leftBC');
+            lBC.style.top = `${calcTop(state.thresholds.leftBC) - 18}px`;
+        }
+
+        function checkAnswer() {
+            state.showResult = true;
+
+            const results = {
+                rightACMask: (state.thresholds.rightAC - state.thresholds.leftBC) >= state.interAural,
+                leftACMask: (state.thresholds.leftAC - state.thresholds.rightBC) >= state.interAural,
+                rightBCMask: (state.thresholds.rightAC - state.thresholds.rightBC) > 10,
+                leftBCMask: (state.thresholds.leftAC - state.thresholds.leftBC) > 10
+            };
+
+            // Calculate Success
+            let correctCount = 0;
+            ['rightAC', 'rightBC', 'leftAC', 'leftBC'].forEach(key => {
+                const needed = results[key + 'Mask'];
+                const selected = state.selections[key];
+                if (needed === selected) correctCount++;
+            });
+
+            // Render Feedback
+            document.getElementById('feedback-waiting').style.display = 'none';
+            const resPanel = document.getElementById('feedback-result');
+            resPanel.style.display = 'block';
+
+            const summary = document.getElementById('feedback-summary');
+            if (correctCount === 4) {
+                summary.className = 'feedback-alert success';
+                summary.innerHTML = '<i class="fas fa-check-circle"></i> CORRECT! Well done.';
+            } else {
+                summary.className = 'feedback-alert warning';
+                summary.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ATTENTION! Some errors.';
+            }
+
+            const list = document.getElementById('feedback-list');
+            list.innerHTML = '';
+
+            const translations = {
+                'rightAC': 'Right AC', 'rightBC': 'Right BC',
+                'leftAC': 'Left AC', 'leftBC': 'Left BC'
+            };
+
+            ['rightAC', 'rightBC', 'leftAC', 'leftBC'].forEach(key => {
+                const needed = results[key + 'Mask'];
+                const selected = state.selections[key];
+                const card = document.createElement('div');
+
+                let resultClass = '';
+                if (selected && needed) resultClass = 'correct';
+                else if (!selected && !needed) resultClass = 'correct';
+                else if (selected && !needed) resultClass = 'incorrect';
+                else if (!selected && needed) resultClass = 'missed';
+
+                const btn = document.getElementById(`opt-${key}`);
+                if (resultClass === 'correct') {
+                    btn.style.backgroundColor = '#dcfce7'; btn.style.borderColor = '#166534';
+                } else if (resultClass === 'incorrect') {
+                    btn.style.backgroundColor = '#fef2f2'; btn.style.borderColor = '#ef4444';
+                } else if (resultClass === 'missed') {
+                    btn.style.backgroundColor = '#fffbeb'; btn.style.borderColor = '#d97706';
+                }
+
+                card.className = `feedback-card ${resultClass}`;
+                card.innerHTML = `
+                    <div class="header">
+                        <span>${translations[key]}</span>
+                        <span>${needed ? 'REQUIRED' : 'NOT REQ'}</span>
+                    </div>
+                    ${needed ? `<div style="font-size:0.75rem">${key.includes('AC') ? `Diff ≥ ${state.interAural}dB` : 'Gap > 10dB'}</div>` : ''}
+                `;
+                list.appendChild(card);
+            });
+
+            const calcTop = (db) => ((db + 10) / 10 * 35) + 20;
+            if (results.rightACMask) {
+                const line = document.getElementById('arrow-right-to-left');
+                line.style.display = 'block';
+                line.setAttribute('y1', calcTop(state.thresholds.rightAC));
+                line.setAttribute('y2', calcTop(state.thresholds.leftBC));
+                line.setAttribute('x1', '50%');
+                line.setAttribute('x2', '50%');
+            }
+            if (results.leftACMask) {
+                const line = document.getElementById('arrow-left-to-right');
+                line.style.display = 'block';
+                line.setAttribute('y1', calcTop(state.thresholds.leftAC));
+                line.setAttribute('y2', calcTop(state.thresholds.rightBC));
+                line.setAttribute('x1', '50%');
+                line.setAttribute('x2', '50%');
+            }
+
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
