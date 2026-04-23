@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apps - Atılım Atılgan</title>
+    <link rel="stylesheet" href="styles.css?v=1.1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .apps-header {
+            margin-bottom: 2.5rem;
+        }
+        .apps-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        .apps-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* Override app-card for real (linked) apps */
+        a.app-card {
+            text-decoration: none;
+            border-style: solid;
+            border-color: #e2e8f0;
+            cursor: pointer;
+        }
+        a.app-card:hover {
+            border-color: var(--accent-color);
+        }
+        .app-card__icon {
+            opacity: 1;
+        }
+        .app-card__tag {
+            display: inline-block;
+            margin-top: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            background: rgba(var(--accent-rgb, 59,130,246), 0.08);
+            padding: 2px 10px;
+            border-radius: 999px;
+            letter-spacing: 0.03em;
+        }
+        .app-card__open {
+            margin-top: 1.2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+        /* Bilingual tag */
+        .app-card__langs {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <nav class="nav">
+            <!-- Header loaded by scripts.js -->
+        </nav>
+    </header>
+
+    <div class="container">
+        <main>
+            <div class="apps-header">
+                <h1>Apps</h1>
+                <p>Small browser-based tools I built for clinical and musical practice.</p>
+            </div>
+
+            <div class="app-grid">
+
+                <!-- GuitarScroll -->
+                <a class="app-card" href="https://atilimatilgan.github.io/GuitarScroll/" target="_blank" rel="noopener">
+                    <div class="app-card__icon">🎸</div>
+                    <div class="app-card__title">GuitarScroll</div>
+                    <div class="app-card__description">
+                        PDF auto-scroller for musicians. Uses your microphone to pause scrolling when you stop playing and resume when you start again.
+                    </div>
+                    <span class="app-card__tag">Music</span>
+                    <div class="app-card__open">Open app ↗</div>
+                </a>
+
+                <!-- Masking Decision Laboratory (EN) -->
+                <a class="app-card" href="app-masking-en.html">
+                    <div class="app-card__icon">🎧</div>
+                    <div class="app-card__title">Masking Decision Laboratory</div>
+                    <div class="app-card__description">
+                        Interactive tool for practising clinical masking decisions in pure-tone audiometry. Create a case, decide, and get instant feedback.
+                    </div>
+                    <span class="app-card__tag">Audiology</span>
+                    <div class="app-card__langs">🇬🇧 EN &nbsp;|&nbsp; <a href="app-masking-tr.html" style="color:inherit;">🇹🇷 TR</a></div>
+                    <div class="app-card__open">Open app ↗</div>
+                </a>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
