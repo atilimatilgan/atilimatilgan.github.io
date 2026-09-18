@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesin Temel Özellikleri - Atılım Atılgan</title>
+    <meta name="description" content="Sesin temel özellikleri (frekans, periyot, şiddet, faz) üzerine interaktif çalışma modülü">
+    <link rel="stylesheet" href="styles.css?v=1.1">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+                        serif: ['Times New Roman', 'Cambria', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Academic Paper Aesthetic Styles */
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+            padding-top: 64px;
+        }
+        .academic-card {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        canvas {
+            background-color: #ffffff;
+        }
+        /* Custom range slider styling for textbook style */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: #e2e8f0;
+            border-radius: 4px;
+            height: 6px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #1e293b;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans selection:bg-slate-200">
+
+    <header class="header">
+        <nav class="nav">
+            <!-- Header loaded by JS -->
+        </nav>
+    </header>
+
+    <header class="bg-white border-b border-slate-300 py-4 px-6 sticky z-40" style="top: 64px;">
+        <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-slate-900 font-serif">Sesin Temel Özellikleri</h1>
+                <p class="text-xs text-slate-500 font-mono mt-0.5">Ders Sunusu İnteraktif Çalışma ve İnceleme Modülü</p>
+            </div>
+
+            <!-- Minimal Audio Controls -->
+            <div class="flex items-center gap-3 bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg">
+                <button id="audioBtn" onclick="toggleAudio()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded transition flex items-center gap-1.5">
+                    <span id="audioIcon">🔇</span>
+                    <span id="audioText">Ses Dinle</span>
+                </button>
+                <div class="flex items-center gap-1.5 text-xs text-slate-600 font-mono">
+                    <span>Ses:</span>
+                    <input id="volumeControl" type="range" min="0" max="1" step="0.05" value="0.2" class="w-16 accent-slate-800" title="Ses Seviyesi">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <div class="bg-slate-100 border-b border-slate-300">
+        <div class="max-w-6xl mx-auto px-6">
+            <nav class="flex space-x-2 py-2 text-sm font-medium">
+                <button id="tabBtn-freq" onclick="switchTab('freq')" class="px-4 py-2 rounded-md transition text-slate-900 bg-white shadow-sm border border-slate-300 font-semibold">
+                    1. Frekans & Periyot
+                </button>
+                <button id="tabBtn-amp" onclick="switchTab('amp')" class="px-4 py-2 rounded-md transition text-slate-600 hover:text-slate-900 hover:bg-white/60">
+                    2. Şiddet (Genlik)
+                </button>
+                <button id="tabBtn-phase" onclick="switchTab('phase')" class="px-4 py-2 rounded-md transition text-slate-600 hover:text-slate-900 hover:bg-white/60">
+                    3. Sesin Fazı
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-6 py-6 w-full flex-grow">
+
+        <!-- ================= SECTION 1: FREKANS & PERİYOT ================= -->
+        <section id="section-freq" class="space-y-6">
+            <div class="academic-card p-5 rounded-lg">
+                <div class="flex flex-wrap justify-between items-start gap-4 mb-4 border-b border-slate-200 pb-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 font-serif">Frekans ve Periyot İlişkisi</h2>
+                        <p class="text-xs text-slate-600 mt-0.5">Saniyedeki salınım sayısı (döngü/cycle) ve 1 tam döngü için geçen süre ($T$).</p>
+                    </div>
+
+                    <!-- Presets matching image 2 (A, B, C) -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-mono text-slate-500">Sunu Örnekleri:</span>
+                        <button onclick="setFreqPreset(5)" class="px-2.5 py-1 text-xs border border-slate-300 bg-slate-50 hover:bg-slate-200 rounded font-mono font-medium">Örnek A (5 Hz)</button>
+                        <button onclick="setFreqPreset(10)" class="px-2.5 py-1 text-xs border border-slate-300 bg-slate-50 hover:bg-slate-200 rounded font-mono font-medium">Örnek B (10 Hz)</button>
+                        <button onclick="setFreqPreset(20)" class="px-2.5 py-1 text-xs border border-slate-300 bg-slate-50 hover:bg-slate-200 rounded font-mono font-medium">Örnek C (20 Hz)</button>
+                    </div>
+                </div>
+
+                <!-- Frequency Canvas Graph -->
+                <div class="relative w-full aspect-[2/1] md:aspect-[2.5/1] border border-slate-300 rounded overflow-hidden">
+                    <canvas id="freqCanvas" class="w-full h-full block"></canvas>
+                </div>
+
+                <!-- Calculation Data Display matching Slide calculations -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div class="bg-slate-50 border border-slate-200 p-3 rounded text-center">
+                        <span class="text-xs text-slate-500 font-mono block">FREKANS ($f = 1/sn$)</span>
+                        <span id="calcFreq" class="text-lg font-bold font-mono text-slate-800">5 Döngü / Saniye</span>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 p-3 rounded text-center">
+                        <span class="text-xs text-slate-500 font-mono block">1 DÖNGÜ / CYCLE SÜRESİ ($T$)</span>
+                        <span id="calcPeriodSec" class="text-lg font-bold font-mono text-slate-800">0.200000 saniye</span>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 p-3 rounded text-center">
+                        <span class="text-xs text-slate-500 font-mono block">MİLİSANİYE BİRİMİNDE ($T$)</span>
+                        <span id="calcPeriodMs" class="text-lg font-bold font-mono text-slate-800">200.00 ms</span>
+                    </div>
+                </div>
+
+                <!-- Slider Control -->
+                <div class="mt-4 pt-3 border-t border-slate-200 flex items-center gap-4">
+                    <label for="freqSlider" class="text-xs font-mono font-semibold text-slate-700 whitespace-nowrap">Frekans (Hz):</label>
+                    <input id="freqSlider" type="range" min="1" max="30" step="1" value="5" class="w-full">
+                    <span id="freqSliderVal" class="text-sm font-mono font-bold text-slate-900 w-12 text-right">5 Hz</span>
+                </div>
+            </div>
+
+            <!-- Comparison Multi-Panel Display matching Slide 2 -->
+            <div class="academic-card p-5 rounded-lg">
+                <h3 class="text-sm font-bold text-slate-800 font-serif mb-2">Sunu Görsel Karşılaştırması (Karşılaştırmalı Grafikler)</h3>
+                <p class="text-xs text-slate-600 mb-4">Aşağıda 1.0 saniyelik zaman aralığında değişen frekansların dalga sıklaşması gösterilmiştir:</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="border border-slate-300 rounded p-2 text-center bg-white">
+                        <span class="text-xs font-bold font-mono block mb-1">A) Düşük Frekanstaki Dalga</span>
+                        <canvas id="miniCanvasA" class="w-full h-28 border border-slate-200"></canvas>
+                        <span class="text-[11px] font-mono text-slate-500 mt-1 block">T = 0.200 sn (200 ms)</span>
+                    </div>
+                    <div class="border border-slate-300 rounded p-2 text-center bg-white">
+                        <span class="text-xs font-bold font-mono block mb-1">B) Orta Frekanstaki Dalga</span>
+                        <canvas id="miniCanvasB" class="w-full h-28 border border-slate-200"></canvas>
+                        <span class="text-[11px] font-mono text-slate-500 mt-1 block">T = 0.100 sn (100 ms)</span>
+                    </div>
+                    <div class="border border-slate-300 rounded p-2 text-center bg-white">
+                        <span class="text-xs font-bold font-mono block mb-1">C) Yüksek Frekanstaki Dalga</span>
+                        <canvas id="miniCanvasC" class="w-full h-28 border border-slate-200"></canvas>
+                        <span class="text-[11px] font-mono text-slate-500 mt-1 block">T = 0.050 sn (50 ms)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECTION 2: ŞİDDET (GENLİK) ================= -->
+        <section id="section-amp" class="space-y-6 hidden">
+            <div class="academic-card p-5 rounded-lg">
+                <div class="flex justify-between items-start border-b border-slate-200 pb-3 mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 font-serif">Sesin Şiddeti (Genlik / Amplitude)</h2>
+                        <p class="text-xs text-slate-600 mt-0.5">Dikey eksendeki maksimum sapma miktarı. Frekans ve faz sabit tutulmuştur.</p>
+                    </div>
+                </div>
+
+                <!-- Amplitude Canvas -->
+                <div class="relative w-full aspect-[2/1] md:aspect-[2.5/1] border border-slate-300 rounded overflow-hidden">
+                    <canvas id="ampCanvas" class="w-full h-full block"></canvas>
+                </div>
+
+                <!-- Controls & Explanation -->
+                <div class="mt-4 pt-3 border-t border-slate-200 space-y-4">
+                    <div class="flex items-center gap-4">
+                        <label for="ampSlider" class="text-xs font-mono font-semibold text-slate-700 whitespace-nowrap">Genlik Değeri (A):</label>
+                        <input id="ampSlider" type="range" min="0.1" max="1.0" step="0.05" value="0.7" class="w-full">
+                        <span id="ampSliderVal" class="text-sm font-mono font-bold text-slate-900 w-12 text-right">0.70</span>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200 p-4 rounded text-xs text-slate-700 space-y-1">
+                        <span class="font-bold font-serif text-slate-900 text-sm block">Açıklama:</span>
+                        <p>• Dikey eksendeki <strong>Amplitude (arbitrary)</strong> yüksekliği sesin enerjisini ve şiddetini ifade eder.</p>
+                        <p>• Genlik arttıkça dalga tepe ve çukurlarının denge eksenine (0 noktası) olan uzaklığı artar.</p>
+                        <p>• Sesin frekansı (saniyedeki dalga sayısı) veya zaman periyodu bu değişimden etkilenmez.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECTION 3: SESİN FAZI ================= -->
+        <section id="section-phase" class="space-y-6 hidden">
+            <div class="academic-card p-5 rounded-lg">
+                <div class="border-b border-slate-200 pb-3 mb-4 flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 font-serif">Sesin Fazı (Phase) ve Dairesel Hareket İlişkisi</h2>
+                        <p class="text-xs text-slate-600 mt-0.5">Sunu Sayfası 1'de yer alan birim çember ve sinüs dalgası trigonometrik bağıntısı.</p>
+                    </div>
+
+                    <!-- Presets for Phase -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-mono text-slate-500">Başlangıç Fazı Presets:</span>
+                        <button onclick="setPhasePreset(0)" class="px-2.5 py-1 text-xs border border-slate-300 bg-slate-50 hover:bg-slate-200 rounded font-mono">0°</button>
+                        <button onclick="setPhasePreset(90)" class="px-2.5 py-1 text-xs border border-slate-300 bg-slate-50 hover:bg-slate-200 rounded font-mono">90°</button>
+                        <button onclick="setPhasePreset(180)" class="px-2.5 py-1 text-xs border border-slate-300 bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100 rounded font-mono font-bold">180° Start Phase</button>
+                        <button onclick="setPhasePreset(270)" class="px-2.5 py-1 text-xs border border-slate-300 bg-slate-50 hover:bg-slate-200 rounded font-mono">270°</button>
+                    </div>
+                </div>
+
+                <!-- Dual Visualisation Canvas Layout (Circle on left, Wave on right) -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <!-- Left: Unit Circle -->
+                    <div class="md:col-span-5 border border-slate-300 rounded p-2 bg-white flex flex-col items-center justify-center relative">
+                        <span class="text-xs font-bold font-serif text-slate-800 mb-1">Dairesel Hareket (Birim Çember)</span>
+                        <canvas id="circleCanvas" class="w-full aspect-square border border-slate-100"></canvas>
+
+                        <!-- Mathematical Formula Box from Slide 1 -->
+                        <div class="absolute bottom-3 left-3 bg-white border-2 border-slate-800 px-3 py-1 font-mono text-xs font-bold text-slate-900 shadow-sm">
+                            sin θ = x / r
+                        </div>
+                    </div>
+
+                    <!-- Right: Linked Waveform Canvas -->
+                    <div class="md:col-span-7 border border-slate-300 rounded p-2 bg-white flex flex-col items-center justify-center">
+                        <span class="text-xs font-bold font-serif text-slate-800 mb-1">Zamana Göre Genlik Değişimi</span>
+                        <canvas id="phaseWaveCanvas" class="w-full aspect-[4/3] md:aspect-auto h-full border border-slate-100"></canvas>
+                    </div>
+                </div>
+
+                <!-- Slider & Status -->
+                <div class="mt-4 pt-3 border-t border-slate-200 space-y-3">
+                    <div class="flex items-center gap-4">
+                        <label for="phaseSlider" class="text-xs font-mono font-semibold text-slate-700 whitespace-nowrap">Açı / Faz Kayması (θ):</label>
+                        <input id="phaseSlider" type="range" min="0" max="360" step="5" value="0" class="w-full">
+                        <span id="phaseSliderVal" class="text-sm font-mono font-bold text-slate-900 w-12 text-right">0°</span>
+                    </div>
+
+                    <div id="phaseNoticeBox" class="bg-slate-50 border border-slate-300 p-3 rounded text-xs text-slate-800 font-mono">
+                        Seçili Faz: <span id="currentPhaseText" class="font-bold text-slate-900">0° (Standart Başlangıç)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-300 py-3 text-center text-xs text-slate-500 font-mono">
+        Sesin Temel Özellikleri — Akademik Çalışma ve Deney Arayüzü
+    </footer>
+
+    <script>
+        // Global App State
+        const state = {
+            activeTab: 'freq',
+            audioEnabled: false,
+            volume: 0.2,
+
+            // Frequency tab parameters
+            frequency: 5, // Hz
+
+            // Amplitude tab parameters
+            amplitude: 0.7,
+
+            // Phase tab parameters
+            phaseDegrees: 0,
+            animAngle: 0 // for continuous unit circle animation
+        };
+
+        // Web Audio Context
+        let audioCtx = null;
+        let oscNode = null;
+        let gainNode = null;
+
+        // Canvas Elements
+        const freqCanvas = document.getElementById('freqCanvas');
+        const ampCanvas = document.getElementById('ampCanvas');
+        const circleCanvas = document.getElementById('circleCanvas');
+        const phaseWaveCanvas = document.getElementById('phaseWaveCanvas');
+
+        const miniCanvasA = document.getElementById('miniCanvasA');
+        const miniCanvasB = document.getElementById('miniCanvasB');
+        const miniCanvasC = document.getElementById('miniCanvasC');
+
+        // Tab Switcher
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+
+            ['freq', 'amp', 'phase'].forEach(t => {
+                const btn = document.getElementById(`tabBtn-${t}`);
+                const sec = document.getElementById(`section-${t}`);
+                if (t === tabId) {
+                    btn.className = 'px-4 py-2 rounded-md transition text-slate-900 bg-white shadow-sm border border-slate-300 font-semibold';
+                    sec.classList.remove('hidden');
+                } else {
+                    btn.className = 'px-4 py-2 rounded-md transition text-slate-600 hover:text-slate-900 hover:bg-white/60';
+                    sec.classList.add('hidden');
+                }
+            });
+
+            // Trigger redraws
+            setTimeout(() => {
+                resizeAllCanvases();
+                updateAudioParams();
+            }, 50);
+        }
+
+        // Setup High-DPI Canvas
+        function setupCanvas(canvas) {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            return { ctx, width: rect.width, height: rect.height };
+        }
+
+        function resizeAllCanvases() {
+            if (state.activeTab === 'freq') {
+                drawFreqCanvas();
+                drawMiniCanvases();
+            } else if (state.activeTab === 'amp') {
+                drawAmpCanvas();
+            } else if (state.activeTab === 'phase') {
+                drawPhaseCanvases();
+            }
+        }
+
+        window.addEventListener('resize', resizeAllCanvases);
+
+        function drawFreqCanvas() {
+            const { ctx, width, height } = setupCanvas(freqCanvas);
+            ctx.clearRect(0, 0, width, height);
+
+            const padding = { left: 60, right: 20, top: 30, bottom: 40 };
+            const plotW = width - padding.left - padding.right;
+            const plotH = height - padding.top - padding.bottom;
+            const centerY = padding.top + plotH / 2;
+
+            // Draw Axes
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.5;
+
+            // Y-Axis
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top - 10);
+            ctx.lineTo(padding.left, height - padding.bottom + 10);
+            ctx.stroke();
+
+            // X-Axis
+            ctx.beginPath();
+            ctx.moveTo(padding.left - 10, centerY);
+            ctx.lineTo(width - padding.right + 10, centerY);
+            ctx.stroke();
+
+            // Axis Labels
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '11px "Times New Roman", serif';
+            ctx.textAlign = 'center';
+
+            // Y Axis title
+            ctx.save();
+            ctx.translate(18, centerY);
+            ctx.rotate(-Math.PI / 2);
+            ctx.font = '12px "Times New Roman", serif';
+            ctx.fillText('Amplitude (arbitrary)', 0, 0);
+            ctx.restore();
+
+            // X Axis title
+            ctx.font = '12px "Times New Roman", serif';
+            ctx.fillText('Time (seconds)', padding.left + plotW / 2, height - 8);
+
+            // X Ticks (0.0 to 1.0 seconds matching Image 2)
+            const ticks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+            ctx.font = '10px Consolas, monospace';
+            ticks.forEach(t => {
+                const x = padding.left + t * plotW;
+                ctx.beginPath();
+                ctx.moveTo(x, centerY - 4);
+                ctx.lineTo(x, centerY + 4);
+                ctx.stroke();
+                ctx.fillText(t.toFixed(1), x, centerY + 18);
+            });
+
+            // Draw Sine Wave
+            const cycles = state.frequency;
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+
+            const ampPixels = plotH * 0.38;
+
+            for (let px = 0; px <= plotW; px++) {
+                const timeSec = px / plotW; // 0.0 to 1.0s
+                const angle = 2 * Math.PI * cycles * timeSec;
+                const y = centerY - ampPixels * Math.sin(angle);
+
+                if (px === 0) ctx.moveTo(padding.left + px, y);
+                else ctx.lineTo(padding.left + px, y);
+            }
+            ctx.stroke();
+        }
+
+        function drawMiniCanvases() {
+            [
+                { canvas: miniCanvasA, freq: 5 },
+                { canvas: miniCanvasB, freq: 10 },
+                { canvas: miniCanvasC, freq: 20 }
+            ].forEach(item => {
+                const { ctx, width, height } = setupCanvas(item.canvas);
+                ctx.clearRect(0, 0, width, height);
+
+                const centerY = height / 2;
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 1;
+
+                // Axes
+                ctx.beginPath();
+                ctx.moveTo(25, 5); ctx.lineTo(25, height - 15);
+                ctx.moveTo(20, centerY); ctx.lineTo(width - 5, centerY);
+                ctx.stroke();
+
+                // Wave
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                const plotW = width - 30;
+                const amp = (height / 2) - 12;
+
+                for (let px = 0; px <= plotW; px++) {
+                    const timeSec = px / plotW;
+                    const angle = 2 * Math.PI * item.freq * timeSec;
+                    const y = centerY - amp * Math.sin(angle);
+                    if (px === 0) ctx.moveTo(25 + px, y);
+                    else ctx.lineTo(25 + px, y);
+                }
+                ctx.stroke();
+            });
+        }
+
+        function drawAmpCanvas() {
+            const { ctx, width, height } = setupCanvas(ampCanvas);
+            ctx.clearRect(0, 0, width, height);
+
+            const padding = { left: 60, right: 20, top: 30, bottom: 40 };
+            const plotW = width - padding.left - padding.right;
+            const plotH = height - padding.top - padding.bottom;
+            const centerY = padding.top + plotH / 2;
+
+            // Draw Axes
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.5;
+
+            // Y-Axis
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top - 10);
+            ctx.lineTo(padding.left, height - padding.bottom + 10);
+            ctx.stroke();
+
+            // X-Axis
+            ctx.beginPath();
+            ctx.moveTo(padding.left - 10, centerY);
+            ctx.lineTo(width - padding.right + 10, centerY);
+            ctx.stroke();
+
+            // Axis Labels
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '12px "Times New Roman", serif';
+
+            ctx.save();
+            ctx.translate(18, centerY);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillText('Amplitude (arbitrary)', 0, 0);
+            ctx.restore();
+
+            ctx.textAlign = 'center';
+            ctx.fillText('Time (seconds)', padding.left + plotW / 2, height - 8);
+
+            // Draw Sine Wave with adjustable amplitude
+            const fixedFreq = 4; // Constant 4 Hz
+            const maxMaxAmpPixels = plotH * 0.45;
+            const currentAmpPixels = maxMaxAmpPixels * state.amplitude;
+
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            for (let px = 0; px <= plotW; px++) {
+                const timeSec = px / plotW;
+                const angle = 2 * Math.PI * fixedFreq * timeSec;
+                const y = centerY - currentAmpPixels * Math.sin(angle);
+
+                if (px === 0) ctx.moveTo(padding.left + px, y);
+                else ctx.lineTo(padding.left + px, y);
+            }
+            ctx.stroke();
+
+            // Amplitude measurement arrows (Dikey Genlik Çizgisi)
+            const peakX = padding.left + (plotW / (fixedFreq * 4)); // First peak
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+
+            // Dotted line to Y axis
+            ctx.beginPath();
+            ctx.moveTo(peakX, centerY - currentAmpPixels);
+            ctx.lineTo(padding.left, centerY - currentAmpPixels);
+            ctx.stroke();
+
+            // Peak Arrow
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(peakX, centerY);
+            ctx.lineTo(peakX, centerY - currentAmpPixels);
+            ctx.stroke();
+
+            // Arrow head
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(peakX - 4, centerY - currentAmpPixels + 6);
+            ctx.lineTo(peakX + 4, centerY - currentAmpPixels + 6);
+            ctx.lineTo(peakX, centerY - currentAmpPixels);
+            ctx.fill();
+
+            // Label 'A'
+            ctx.font = 'bold 12px "Times New Roman", serif';
+            ctx.fillText('A', peakX + 12, centerY - currentAmpPixels / 2 + 4);
+        }
+
+        function drawPhaseCanvases() {
+            // 1. Draw Unit Circle Canvas (Matching Slide 1 Left Image)
+            const circleRes = setupCanvas(circleCanvas);
+            const ctxC = circleRes.ctx;
+            const wC = circleRes.width;
+            const hC = circleRes.height;
+            ctxC.clearRect(0, 0, wC, hC);
+
+            const centerC = { x: wC / 2, y: hC / 2 };
+            const radius = Math.min(wC, hC) * 0.35;
+
+            // Main Circle
+            ctxC.strokeStyle = '#0f172a';
+            ctxC.lineWidth = 1.5;
+            ctxC.beginPath();
+            ctxC.arc(centerC.x, centerC.y, radius, 0, 2 * Math.PI);
+            ctxC.stroke();
+
+            // Center Horizontal Axis Line
+            ctxC.strokeStyle = '#94a3b8';
+            ctxC.setLineDash([3, 3]);
+            ctxC.beginPath();
+            ctxC.moveTo(centerC.x - radius - 15, centerC.y);
+            ctxC.lineTo(centerC.x + radius + 15, centerC.y);
+            ctxC.stroke();
+
+            // Degree Angle Markers around circle matching Image 1
+            ctxC.setLineDash([]);
+            ctxC.fillStyle = '#0f172a';
+            ctxC.font = '12px "Times New Roman", serif';
+            ctxC.textAlign = 'center';
+            ctxC.textBaseline = 'middle';
+
+            ctxC.fillText('0°', centerC.x + radius + 16, centerC.y + 10);
+            ctxC.fillText('360°', centerC.x + radius + 16, centerC.y - 10);
+            ctxC.fillText('90°', centerC.x, centerC.y - radius - 14);
+            ctxC.fillText('180°', centerC.x - radius - 18, centerC.y);
+            ctxC.fillText('270°', centerC.x, centerC.y + radius + 14);
+
+            // Angle Theta Representation
+            const currentPhaseRad = (state.phaseDegrees * Math.PI) / 180;
+            // Note: Canvas Y is inverted
+            const pointX = centerC.x + radius * Math.cos(-currentPhaseRad);
+            const pointY = centerC.y + radius * Math.sin(-currentPhaseRad);
+
+            // Radius line r
+            ctxC.strokeStyle = '#0f172a';
+            ctxC.lineWidth = 2;
+            ctxC.beginPath();
+            ctxC.moveTo(centerC.x, centerC.y);
+            ctxC.lineTo(pointX, pointY);
+            ctxC.stroke();
+
+            // Vertical component line x (height)
+            ctxC.strokeStyle = '#2563eb';
+            ctxC.lineWidth = 2;
+            ctxC.beginPath();
+            ctxC.moveTo(pointX, centerC.y);
+            ctxC.lineTo(pointX, pointY);
+            ctxC.stroke();
+
+            // Radius label 'r'
+            ctxC.fillStyle = '#0f172a';
+            ctxC.font = 'italic 12px "Times New Roman", serif';
+            ctxC.fillText('r', (centerC.x + pointX) / 2 - 8, (centerC.y + pointY) / 2 - 8);
+
+            // Vertical component label 'x'
+            ctxC.fillStyle = '#2563eb';
+            ctxC.fillText('x', pointX + 10, (centerC.y + pointY) / 2);
+
+            // Theta Arc
+            ctxC.strokeStyle = '#0f172a';
+            ctxC.lineWidth = 1;
+            ctxC.beginPath();
+            ctxC.arc(centerC.x, centerC.y, 25, 0, -currentPhaseRad, true);
+            ctxC.stroke();
+
+            ctxC.fillStyle = '#0f172a';
+            ctxC.font = '12px "Times New Roman", serif';
+            ctxC.fillText('θ', centerC.x + 32 * Math.cos(-currentPhaseRad / 2), centerC.y + 32 * Math.sin(-currentPhaseRad / 2));
+
+
+            // 2. Draw Waveform Canvas Linked to Phase (Matching Slide 1 Right Image)
+            const waveRes = setupCanvas(phaseWaveCanvas);
+            const ctxW = waveRes.ctx;
+            const wW = waveRes.width;
+            const hW = waveRes.height;
+            ctxW.clearRect(0, 0, wW, hW);
+
+            const padW = { left: 55, right: 25, top: 25, bottom: 35 };
+            const plotW = wW - padW.left - padW.right;
+            const plotH = hW - padW.top - padW.bottom;
+            const centerYW = padW.top + plotH / 2;
+
+            // Axes
+            ctxW.strokeStyle = '#0f172a';
+            ctxW.lineWidth = 1.5;
+
+            // Y Axis
+            ctxW.beginPath();
+            ctxW.moveTo(padW.left, padW.top - 10);
+            ctxW.lineTo(padW.left, hW - padW.bottom + 10);
+            ctxW.stroke();
+
+            // X Axis
+            ctxW.beginPath();
+            ctxW.moveTo(padW.left - 10, centerYW);
+            ctxW.lineTo(wW - padW.right + 10, centerYW);
+            ctxW.stroke();
+
+            // Titles
+            ctxW.fillStyle = '#0f172a';
+            ctxW.font = '11px "Times New Roman", serif';
+
+            ctxW.save();
+            ctxW.translate(16, centerYW);
+            ctxW.rotate(-Math.PI / 2);
+            ctxW.textAlign = 'center';
+            ctxW.fillText('Amplitude (arbitrary)', 0, 0);
+            ctxW.restore();
+
+            ctxW.textAlign = 'center';
+            ctxW.fillText('Time (arbitrary)', padW.left + plotW / 2, hW - 8);
+
+            // Angle Markers along X axis (0°, 90°, 180°, 270°, 360°)
+            const angles = [
+                { deg: 0, label: '0°' },
+                { deg: 90, label: '90°' },
+                { deg: 180, label: '180°' },
+                { deg: 270, label: '270°' },
+                { deg: 360, label: '360°' }
+            ];
+
+            ctxW.font = '11px "Times New Roman", serif';
+            angles.forEach(a => {
+                const x = padW.left + (a.deg / 360) * plotW;
+                ctxW.beginPath();
+                ctxW.moveTo(x, centerYW - 3);
+                ctxW.lineTo(x, centerYW + 3);
+                ctxW.stroke();
+                ctxW.fillText(a.label, x, centerYW + 16);
+            });
+
+            // Draw Sine Wave starting from selected Phase
+            ctxW.strokeStyle = '#0f172a';
+            ctxW.lineWidth = 2;
+            ctxW.beginPath();
+
+            const ampW = plotH * 0.38;
+            const startPhaseRad = (state.phaseDegrees * Math.PI) / 180;
+
+            for (let px = 0; px <= plotW; px++) {
+                const fraction = px / plotW; // 0 to 1 full cycle
+                const angle = 2 * Math.PI * fraction + startPhaseRad;
+                const y = centerYW - ampW * Math.sin(angle);
+
+                if (px === 0) ctxW.moveTo(padW.left + px, y);
+                else ctxW.lineTo(padW.left + px, y);
+            }
+            ctxW.stroke();
+
+            // Highlight "180° start phase" if active (matching Image 1 Right diagram)
+            if (state.phaseDegrees === 180) {
+                const startY = centerYW - ampW * Math.sin(startPhaseRad); // CenterY
+                ctxW.fillStyle = '#be123c';
+                ctxW.font = 'bold 11px Consolas, monospace';
+
+                // Arrow pointing to start
+                ctxW.beginPath();
+                ctxW.moveTo(padW.left + 50, centerYW - 25);
+                ctxW.lineTo(padW.left + 5, centerYW - 3);
+                ctxW.strokeStyle = '#be123c';
+                ctxW.lineWidth = 1.5;
+                ctxW.stroke();
+
+                ctxW.fillText('180° start phase', padW.left + 110, centerYW - 30);
+            }
+        }
+
+        // Preset Helpers
+        function setFreqPreset(val) {
+            state.frequency = val;
+            document.getElementById('freqSlider').value = val;
+            updateFreqUI();
+            drawFreqCanvas();
+            updateAudioParams();
+        }
+
+        function setPhasePreset(deg) {
+            state.phaseDegrees = deg;
+            document.getElementById('phaseSlider').value = deg;
+            updatePhaseUI();
+            drawPhaseCanvases();
+        }
+
+        // Sliders Listeners
+        document.getElementById('freqSlider').addEventListener('input', (e) => {
+            state.frequency = parseInt(e.target.value);
+            updateFreqUI();
+            drawFreqCanvas();
+            updateAudioParams();
+        });
+
+        document.getElementById('ampSlider').addEventListener('input', (e) => {
+            state.amplitude = parseFloat(e.target.value);
+            document.getElementById('ampSliderVal').textContent = state.amplitude.toFixed(2);
+            drawAmpCanvas();
+            updateAudioParams();
+        });
+
+        document.getElementById('phaseSlider').addEventListener('input', (e) => {
+            state.phaseDegrees = parseInt(e.target.value);
+            updatePhaseUI();
+            drawPhaseCanvases();
+        });
+
+        // UI Text Updates
+        function updateFreqUI() {
+            document.getElementById('freqSliderVal').textContent = `${state.frequency} Hz`;
+            document.getElementById('calcFreq').textContent = `${state.frequency} Döngü / Saniye (1/sn)`;
+
+            const periodSec = 1 / state.frequency;
+            const periodMs = periodSec * 1000;
+
+            document.getElementById('calcPeriodSec').textContent = `${periodSec.toFixed(6)} saniye`;
+            document.getElementById('calcPeriodMs').textContent = `${periodMs.toFixed(2)} ms`;
+        }
+
+        function updatePhaseUI() {
+            document.getElementById('phaseSliderVal').textContent = `${state.phaseDegrees}°`;
+            const box = document.getElementById('phaseNoticeBox');
+            const txt = document.getElementById('currentPhaseText');
+
+            txt.textContent = `${state.phaseDegrees}° Başlangıç Fazı`;
+            if (state.phaseDegrees === 180) {
+                box.className = 'bg-rose-50 border border-rose-300 p-3 rounded text-xs text-rose-900 font-mono font-bold';
+                txt.textContent = '180° start phase (Slayttaki Evrilmiş Zıt Faz)';
+            } else {
+                box.className = 'bg-slate-50 border border-slate-300 p-3 rounded text-xs text-slate-800 font-mono';
+            }
+        }
+
+        // Audio Engine Implementation
+        function toggleAudio() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+
+                oscNode = audioCtx.createOscillator();
+                gainNode = audioCtx.createGain();
+
+                oscNode.type = 'sine';
+                oscNode.frequency.setValueAtTime(state.frequency * 40, audioCtx.currentTime); // Scaled for comfortable listening pitch
+
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+
+                oscNode.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscNode.start();
+            }
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            state.audioEnabled = !state.audioEnabled;
+
+            const btn = document.getElementById('audioBtn');
+            const icon = document.getElementById('audioIcon');
+            const text = document.getElementById('audioText');
+
+            if (state.audioEnabled) {
+                btn.className = "px-3 py-1 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-medium rounded transition flex items-center gap-1.5";
+                icon.textContent = "🔊";
+                text.textContent = "Ses Açık";
+            } else {
+                btn.className = "px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded transition flex items-center gap-1.5";
+                icon.textContent = "🔇";
+                text.textContent = "Ses Dinle";
+            }
+
+            updateAudioParams();
+        }
+
+        document.getElementById('volumeControl').addEventListener('input', (e) => {
+            state.volume = parseFloat(e.target.value);
+            updateAudioParams();
+        });
+
+        function updateAudioParams() {
+            if (!audioCtx || !oscNode || !gainNode) return;
+
+            const now = audioCtx.currentTime;
+            // Map 1-30 Hz slider to audible range (100 Hz - 1200 Hz)
+            const audibleFreq = 120 + (state.frequency * 25);
+            oscNode.frequency.setTargetAtTime(audibleFreq, now, 0.03);
+
+            const targetGain = state.audioEnabled ? (state.amplitude * state.volume * 0.3) : 0;
+            gainNode.gain.setTargetAtTime(targetGain, now, 0.03);
+        }
+
+        // On Initialization
+        window.onload = function() {
+            updateFreqUI();
+            updatePhaseUI();
+            switchTab('freq');
+        };
+    </script>
+    <script src="scripts.js"></script>
+</body>
+</html>
