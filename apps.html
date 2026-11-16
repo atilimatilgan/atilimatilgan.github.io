@@ -54,6 +54,34 @@
             font-weight: 600;
             color: var(--accent-color);
         }
+        /* Cards with one link per language */
+        .app-card__title-alt {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .app-card__links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 1.2rem;
+        }
+        .app-card__links a {
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--accent-color);
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            padding: 6px 14px;
+            background: #fff;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .app-card__links a:hover {
+            border-color: var(--accent-color);
+            background: #eff6ff;
+        }
         /* Bilingual tag */
         .app-card__langs {
             font-size: 0.72rem;
@@ -90,17 +118,35 @@
                     <div class="app-card__open">Open app ↗</div>
                 </a>
 
-                <!-- Masking Decision Laboratory (EN) -->
-                <a class="app-card" href="app-masking-en.html">
+                <!-- Maskeleme Karar Laboratuvarı / Masking Decision Laboratory -->
+                <div class="app-card">
                     <div class="app-card__icon">🎧</div>
-                    <div class="app-card__title">Masking Decision Laboratory</div>
+                    <div class="app-card__title">Maskeleme Karar Laboratuvarı<br><span class="app-card__title-alt">Masking Decision Laboratory</span></div>
                     <div class="app-card__description">
-                        Interactive tool for practising clinical masking decisions in pure-tone audiometry. Create a case, decide, and get instant feedback.
+                        Saf ses odyometrisinde hangi eşiklerde maske gerektiğine karar verme alıştırması.<br>
+                        <span lang="en">Practise deciding which pure-tone thresholds need masking, with instant feedback.</span>
                     </div>
                     <span class="app-card__tag">Audiology</span>
-                    <div class="app-card__langs">🇬🇧 EN &nbsp;|&nbsp; <a href="app-masking-tr.html" style="color:inherit;">🇹🇷 TR</a></div>
-                    <div class="app-card__open">Open app ↗</div>
-                </a>
+                    <div class="app-card__links">
+                        <a href="app-masking-tr.html" lang="tr" hreflang="tr">🇹🇷 Türkçe</a>
+                        <a href="app-masking-en.html" lang="en" hreflang="en">🇬🇧 English</a>
+                    </div>
+                </div>
+
+                <!-- Maske Uygulaması / Masking Practice (plateau method) -->
+                <div class="app-card">
+                    <div class="app-card__icon">📈</div>
+                    <div class="app-card__title">Maske Uygulaması<br><span class="app-card__title-alt">Masking Practice</span></div>
+                    <div class="app-card__description">
+                        Hava ve kemik yolu senaryolarında plato yöntemiyle maskeli eşiği bulma simülasyonu.<br>
+                        <span lang="en">Find the masked threshold with the plateau method in air- and bone-conduction scenarios.</span>
+                    </div>
+                    <span class="app-card__tag">Audiology</span>
+                    <div class="app-card__links">
+                        <a href="app-plateau-tr.html" lang="tr" hreflang="tr">🇹🇷 Türkçe</a>
+                        <a href="app-plateau-en.html" lang="en" hreflang="en">🇬🇧 English</a>
+                    </div>
+                </div>
 
                 <!-- Sesin Temel Özellikleri (TR) -->
                 <a class="app-card" href="app-ses-ozellikleri.html">
