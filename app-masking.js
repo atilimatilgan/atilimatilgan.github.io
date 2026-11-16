@@ -9,17 +9,23 @@
 
     const { LANG, IA, RED, BLUE, drawStrip, headerHTML } = window.ML;
     const ABG_LIMIT = 10;
+    // Bone conduction has IA = 0, so an unmasked bone threshold cannot be much worse than the other
+    // ear's. A bone threshold more than this many dB worse is therefore drawn as a masked one ([ ]).
+    const BONE_MASKED_DIFF = 10;
     const KEYS = ['rightAC', 'rightBC', 'leftAC', 'leftBC'];
     const DEFAULTS = { rightAC: 40, rightBC: 10, leftAC: 10, leftBC: 10 };
 
-    // Ready-made cases (unmasked thresholds at one frequency).
+    // Ready-made cases at one frequency. Bone thresholds more than 10 dB worse than the other ear's
+    // are masked thresholds and are drawn with brackets.
     const PRESETS = [
-        { rightAC: 40, rightBC: 10, leftAC: 10, leftBC: 10 },
-        { rightAC: 65, rightBC: 10, leftAC: 10, leftBC: 10 },
-        { rightAC: 50, rightBC: 50, leftAC: 50, leftBC: 50 },
-        { rightAC: 50, rightBC: 10, leftAC: 45, leftBC: 10 },
-        { rightAC: 35, rightBC: 35, leftAC: 80, leftBC: 35 },
-        { rightAC: 10, rightBC: 10, leftAC: 50, leftBC: 10 }
+        { rightAC: 40, rightBC: 10, leftAC: 10, leftBC: 10 },   // unilateral air-bone gap
+        { rightAC: 65, rightBC: 60, leftAC: 10, leftBC: 10 },   // unilateral sensorineural, masked right bone
+        { rightAC: 50, rightBC: 50, leftAC: 50, leftBC: 50 },   // symmetric sensorineural: nothing to mask
+        { rightAC: 50, rightBC: 10, leftAC: 45, leftBC: 10 },   // bilateral air-bone gaps
+        { rightAC: 20, rightBC: 20, leftAC: 80, leftBC: 55 },   // left mixed loss, masked left bone
+        { rightAC: 10, rightBC: 10, leftAC: 50, leftBC: 10 },   // exactly at IA for supra-aural earphones
+        { rightAC: 30, rightBC: 25, leftAC: 20, leftBC: 15 },   // small gap, but air − opposite bone > 10
+        { rightAC: 70, rightBC: 45, leftAC: 40, leftBC: 10 }    // right mixed (masked bone), left conductive
     ];
 
     const STR = {
@@ -32,14 +38,15 @@
             transducer: 'Kulaklık tipi (IA)',
             supra: 'Kulak üstü (40 dB)',
             insert: 'Kulak içi (50 dB)',
-            buildCase: 'Vaka oluştur (maskesiz eşikler)',
+            buildCase: 'Vaka oluştur (eşikler)',
             right: 'SAĞ KULAK', left: 'SOL KULAK',
             rightShort: 'SAĞ', leftShort: 'SOL',
             air: 'Hava yolu', bone: 'Kemik yolu',
             preset: 'Hazır vaka', presetNone: 'Seç…', presetItem: 'Vaka',
             random: 'Rastgele vaka', reset: 'Sıfırla',
             audiogram: 'Odyogram (tek frekans)',
-            legend: [['r', 'O', 'Sağ hava'], ['r', '<', 'Sağ kemik'], ['l', 'X', 'Sol hava'], ['l', '>', 'Sol kemik']],
+            legend: { acR: 'Sağ hava', bcR: 'Sağ kemik', bcmR: 'Sağ kemik (maskeli)', acL: 'Sol hava', bcL: 'Sol kemik', bcmL: 'Sol kemik (maskeli)' },
+            maskedNote: 'Bir kulağın kemik eşiği diğerinden 10 dB’den fazla kötüyse maskesiz ölçülmüş olamaz (kemikte IA = 0); bu eşik maskeli sembolle gösterilir.',
             question: 'Hangisinde maske gerekir?',
             questionHint: 'Gerekli olanların hepsini işaretle. Hiçbiri gerekmiyorsa boş bırak.',
             opts: { rightAC: 'Sağ hava yolu', rightBC: 'Sağ kemik yolu', leftAC: 'Sol hava yolu', leftBC: 'Sol kemik yolu' },
@@ -82,14 +89,15 @@
             transducer: 'Transducer (IA)',
             supra: 'Supra-aural (40 dB)',
             insert: 'Insert (50 dB)',
-            buildCase: 'Build a case (unmasked thresholds)',
+            buildCase: 'Build a case (thresholds)',
             right: 'RIGHT EAR', left: 'LEFT EAR',
             rightShort: 'RIGHT', leftShort: 'LEFT',
             air: 'Air conduction', bone: 'Bone conduction',
             preset: 'Ready-made case', presetNone: 'Choose…', presetItem: 'Case',
             random: 'Random case', reset: 'Reset',
             audiogram: 'Audiogram (single frequency)',
-            legend: [['r', 'O', 'Right air'], ['r', '<', 'Right bone'], ['l', 'X', 'Left air'], ['l', '>', 'Left bone']],
+            legend: { acR: 'Right air', bcR: 'Right bone', bcmR: 'Right bone (masked)', acL: 'Left air', bcL: 'Left bone', bcmL: 'Left bone (masked)' },
+            maskedNote: 'A bone threshold more than 10 dB worse than the other ear’s cannot be an unmasked one (IA = 0 for bone), so it is drawn with the masked symbol.',
             question: 'Which need masking?',
             questionHint: 'Select every threshold that needs masking. Leave empty if none do.',
             opts: { rightAC: 'Right air conduction', rightBC: 'Right bone conduction', leftAC: 'Left air conduction', leftBC: 'Left bone conduction' },
@@ -140,7 +148,7 @@
     function sliderHTML(key, label, symbol) {
         return `
             <label class="ml-slider-label" for="${key}">
-                <span>${label} (${symbol})</span>
+                <span>${label} (<span id="sym-${key}">${symbol}</span>)</span>
                 <span class="ml-slider-val" id="val-${key}"></span>
             </label>
             <input type="range" id="${key}" min="-10" max="120" step="5">`;
@@ -193,9 +201,8 @@
                     <section class="ml-panel">
                         <h2><i class="fas fa-chart-line" aria-hidden="true"></i> ${T.audiogram}</h2>
                         <svg class="ml-strip" id="strip" role="img" aria-label="${T.audiogram}"></svg>
-                        <div class="ml-legend">
-                            ${T.legend.map(l => `<span><b class="${l[0]}">${l[1].replace('<', '&lt;').replace('>', '&gt;')}</b>${l[2]}</span>`).join('')}
-                        </div>
+                        <div class="ml-legend" id="legend"></div>
+                        <p class="ml-note" id="maskedNote" style="margin:10px 0 0;text-align:center" hidden>${T.maskedNote}</p>
                     </section>
                 </div>
 
@@ -287,8 +294,9 @@
         render();
     }
 
-    // A physically plausible unmasked audiogram: unmasked bone reflects the better cochlea,
-    // and unmasked air cannot exceed IA + the opposite bone threshold.
+    // A physically plausible audiogram. Unmasked air cannot exceed IA + the opposite bone threshold.
+    // Unmasked bone reflects the better cochlea; when the two cochleae differ by more than 10 dB the
+    // worse ear's bone threshold is shown either unmasked (at the better level) or already masked.
     function randomCase() {
         const pick = arr => arr[Math.floor(Math.random() * arr.length)];
         const ia = IA[state.transducer];
@@ -296,12 +304,13 @@
         const gaps = [0, 0, 0, 5, 10, 15, 20, 30, 40, 50];
         const air = { right: Math.min(110, bone.right + pick(gaps)), left: Math.min(110, bone.left + pick(gaps)) };
         const best = Math.min(bone.right, bone.left);
+        const showTrueBone = Math.abs(bone.right - bone.left) <= BONE_MASKED_DIFF || Math.random() < 0.5;
         const rightAC = Math.min(air.right, ia + bone.left + pick([0, 0, 5]));
         const leftAC = Math.min(air.left, ia + bone.right + pick([0, 0, 5]));
         return {
             rightAC: rightAC, leftAC: leftAC,
-            rightBC: Math.min(rightAC, best),
-            leftBC: Math.min(leftAC, best)
+            rightBC: Math.min(rightAC, showTrueBone ? bone.right : best),
+            leftBC: Math.min(leftAC, showTrueBone ? bone.left : best)
         };
     }
 
@@ -350,6 +359,18 @@
             $('#val-' + k).textContent = t[k] + ' dB';
         });
 
+        // Bone symbols: masked when that ear's bone threshold is more than 10 dB worse than the other's
+        const bone = {
+            right: t.rightBC - t.leftBC > BONE_MASKED_DIFF ? 'bcmR' : 'bcR',
+            left: t.leftBC - t.rightBC > BONE_MASKED_DIFF ? 'bcmL' : 'bcL'
+        };
+        const glyph = { acR: 'O', acL: 'X', bcR: '&lt;', bcL: '&gt;', bcmR: '[', bcmL: ']' };
+        $('#sym-rightBC').innerHTML = glyph[bone.right];
+        $('#sym-leftBC').innerHTML = glyph[bone.left];
+        $('#legend').innerHTML = ['acR', bone.right, 'acL', bone.left].map(k =>
+            `<span><b class="${k.slice(-1) === 'R' ? 'r' : 'l'}">${glyph[k]}</b>${T.legend[k]}</span>`).join('');
+        $('#maskedNote').hidden = bone.right === 'bcR' && bone.left === 'bcL';
+
         // Audiogram
         const dims = !state.checked ? [] : [
             { slot: 'L2', from: t.rightAC, to: t.leftBC, label: res.rightAC.diff + ' dB', caption: T.capAC, color: RED, active: res.rightAC.diff > ABG_LIMIT },
@@ -361,7 +382,7 @@
             labels: { right: T.rightShort, left: T.leftShort },
             dims: dims,
             symbols: [
-                { kind: 'bcR', db: t.rightBC }, { kind: 'bcL', db: t.leftBC },
+                { kind: bone.right, db: t.rightBC }, { kind: bone.left, db: t.leftBC },
                 { kind: 'acR', db: t.rightAC }, { kind: 'acL', db: t.leftAC }
             ]
         });
