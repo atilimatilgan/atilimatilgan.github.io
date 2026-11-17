@@ -1017,3 +1017,12 @@
 .ml-explain sub {
     font-size: 0.7em;
 }
+
+/* Bone thresholds that are already masked: no decision needed */
+.ml-option.is-already,
+.ml-option.is-already:hover {
+    background: #273449;
+    border-color: #334155;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
