@@ -63,6 +63,8 @@
             whyACno: ia => `Fark < IA (${ia} dB): çapraz işitme beklenmez.`,
             whyBCneed: other => `Farklardan en az biri > ${ABG_LIMIT} dB: kemikte IA = 0 olduğundan bu kemik eşiğinin hangi kokleaya ait olduğu maskesiz bilinemez. Maske gürültüsü ${other} kulağa verilir.`,
             whyBCno: `İki fark da ≤ ${ABG_LIMIT} dB: maske gerekmez.`,
+            whyBCalready: 'Bu kemik eşiği karşı kulaktan 10 dB’den fazla kötü, yani maskeli ölçülmüş ([ ] sembolü). Maskeleme zaten yapıldığı için yeniden karar vermek gerekmez.',
+            alreadyShort: 'zaten maskeli', stAlready: 'Zaten maskeli: işaretlemeye gerek yok',
             earName: { right: 'Sağ', left: 'Sol' },
             earLower: { right: 'sol', left: 'sağ' },   // opposite ear, lower case
             stCorrect: 'Doğru karar', stIncorrect: 'Gereksiz işaretledin', stMissed: 'Atladın: maske gerekiyordu',
@@ -114,6 +116,8 @@
             whyACno: ia => `Difference < IA (${ia} dB): cross hearing is not expected.`,
             whyBCneed: other => `At least one difference is > ${ABG_LIMIT} dB: with IA = 0 for bone, we cannot tell which cochlea this bone threshold belongs to without masking. Masking noise goes to the ${other} ear.`,
             whyBCno: `Both differences are ≤ ${ABG_LIMIT} dB: no masking needed.`,
+            whyBCalready: 'This bone threshold is more than 10 dB worse than the other ear’s, so it was measured with masking ([ ] symbol). Masking has already been done, so no further decision is needed.',
+            alreadyShort: 'already masked', stAlready: 'Already masked: no need to select it',
             earName: { right: 'Right', left: 'Left' },
             earLower: { right: 'left', left: 'right' },
             stCorrect: 'Correct decision', stIncorrect: 'Selected, but not needed', stMissed: 'Missed: masking was needed',
@@ -314,6 +318,15 @@
         };
     }
 
+    // A bone threshold more than 10 dB worse than the other ear's is an already-masked threshold.
+    function maskedBone() {
+        const t = state.thresholds;
+        return {
+            right: t.rightBC - t.leftBC > BONE_MASKED_DIFF,
+            left: t.leftBC - t.rightBC > BONE_MASKED_DIFF
+        };
+    }
+
     function evaluate() {
         const t = state.thresholds;
         const ia = IA[state.transducer];
@@ -328,6 +341,14 @@
         res.leftAC.need = res.leftAC.diff >= ia;
         res.rightBC.need = res.rightBC.diff > ABG_LIMIT || res.rightBC.cross > ABG_LIMIT;
         res.leftBC.need = res.leftBC.diff > ABG_LIMIT || res.leftBC.cross > ABG_LIMIT;
+        // Already-masked bone thresholds need no further masking decision.
+        const masked = maskedBone();
+        ['right', 'left'].forEach(side => {
+            if (!masked[side]) return;
+            res[side + 'BC'].need = false;
+            res[side + 'BC'].already = true;
+            state.selections[side + 'BC'] = false;
+        });
         KEYS.forEach(k => {
             const sel = state.selections[k];
             res[k].status = sel === res[k].need ? 'correct' : (sel ? 'incorrect' : 'missed');
@@ -360,10 +381,8 @@
         });
 
         // Bone symbols: masked when that ear's bone threshold is more than 10 dB worse than the other's
-        const bone = {
-            right: t.rightBC - t.leftBC > BONE_MASKED_DIFF ? 'bcmR' : 'bcR',
-            left: t.leftBC - t.rightBC > BONE_MASKED_DIFF ? 'bcmL' : 'bcL'
-        };
+        const masked = maskedBone();
+        const bone = { right: masked.right ? 'bcmR' : 'bcR', left: masked.left ? 'bcmL' : 'bcL' };
         const glyph = { acR: 'O', acL: 'X', bcR: '&lt;', bcL: '&gt;', bcmR: '[', bcmL: ']' };
         $('#sym-rightBC').innerHTML = glyph[bone.right];
         $('#sym-leftBC').innerHTML = glyph[bone.left];
@@ -394,7 +413,11 @@
             btn.setAttribute('aria-pressed', String(sel));
             btn.classList.remove('res-correct', 'res-incorrect', 'res-missed');
             if (state.checked) btn.classList.add('res-' + res[key].status);
-            btn.querySelector('i').className = sel ? 'fas fa-square-check' : 'far fa-square';
+            const already = !!res[key].already;
+            btn.disabled = already;
+            btn.classList.toggle('is-already', already);
+            btn.querySelector('span').textContent = T.opts[key] + (already ? ` (${T.alreadyShort})` : '');
+            btn.querySelector('i').className = already ? 'fas fa-lock' : (sel ? 'fas fa-square-check' : 'far fa-square');
         });
         $('#score').textContent = state.score.correct + ' / ' + state.score.total;
 
@@ -416,8 +439,8 @@
                   T.calcAC(T.earName[side], T.earName[other], t[side + 'AC'], t[other + 'BC'], r.cross);
             const why = isAC
                 ? (r.need ? T.whyACneed(ia, T.earLower[side]) : T.whyACno(ia))
-                : (r.need ? T.whyBCneed(T.earLower[side]) : T.whyBCno);
-            const status = r.status === 'correct' ? T.stCorrect : (r.status === 'incorrect' ? T.stIncorrect : T.stMissed);
+                : (r.already ? T.whyBCalready : (r.need ? T.whyBCneed(T.earLower[side]) : T.whyBCno));
+            const status = r.already ? T.stAlready : r.status === 'correct' ? T.stCorrect : (r.status === 'incorrect' ? T.stIncorrect : T.stMissed);
             const icon = r.status === 'correct' ? 'fa-check' : (r.status === 'incorrect' ? 'fa-xmark' : 'fa-triangle-exclamation');
             return `
                 <div class="ml-card ml-card--${r.status}">
