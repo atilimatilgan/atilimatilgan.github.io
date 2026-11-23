@@ -349,41 +349,8 @@
                 title: T.title, subtitle: T.subtitle, altHref: T.altHref,
                 extra: `<a class="ml-link" href="${T.prevHref}"><i class="fas fa-arrow-left" aria-hidden="true"></i> ${T.prev}</a>`
             })}
-            <div class="ml-layout ml-layout--plateau">
-                <div class="ml-col">
-                    <section class="ml-panel">
-                        <h2><i class="fas fa-user-doctor" aria-hidden="true"></i> ${T.scenario}</h2>
-                        <select class="ml-select" id="scenario" aria-label="${T.scenario}">
-                            <optgroup label="${T.groupAC}">${options('ac')}</optgroup>
-                            <optgroup label="${T.groupBC}">${options('bc')}</optgroup>
-                            <option value="RND" hidden>${T.random}</option>
-                        </select>
-                        <div class="ml-btn-row" style="margin-top:10px">
-                            <button type="button" class="ml-btn" id="rndAC"><i class="fas fa-shuffle" aria-hidden="true"></i> ${T.randomAC}</button>
-                            <button type="button" class="ml-btn" id="rndBC"><i class="fas fa-shuffle" aria-hidden="true"></i> ${T.randomBC}</button>
-                        </div>
-                        <span class="ml-field-label" style="margin-top:14px">${T.transducer}</span>
-                        <div class="ml-toggle" id="transducer">
-                            <button type="button" data-type="supra">${T.supra}</button>
-                            <button type="button" data-type="insert">${T.insert}</button>
-                        </div>
-                    </section>
-                    <section class="ml-panel">
-                        <h2><i class="fas fa-bullseye" aria-hidden="true"></i> ${T.task}</h2>
-                        <div class="ml-task" id="task"></div>
-                    </section>
-                    <section class="ml-panel">
-                        <h2><i class="fas fa-chart-line" aria-hidden="true"></i> ${T.audiogram} <span id="stripFreq"></span></h2>
-                        <svg class="ml-strip ml-strip--small" id="strip" role="img" aria-label="${T.audiogram}"></svg>
-                        <div class="ml-legend" id="stripLegend"></div>
-                    </section>
-                    <details class="ml-panel ml-rules">
-                        <summary>${T.method}</summary>
-                        ${T.methodBody}
-                    </details>
-                </div>
-
-                <div class="ml-col">
+            <div class="ml-plateau">
+                <div class="ml-top">
                     <section class="ml-panel">
                         <h2><i class="fas fa-sliders" aria-hidden="true"></i> ${T.audiometer}</h2>
                         <div class="ml-audiometer">
@@ -417,18 +384,48 @@
                         </div>
                     </section>
                     <section class="ml-panel">
+                        <h2><i class="fas fa-chart-line" aria-hidden="true"></i> ${T.audiogram} <span id="stripFreq"></span></h2>
+                        <svg class="ml-strip" id="strip" role="img" aria-label="${T.audiogram}"></svg>
+                        <div class="ml-legend" id="stripLegend"></div>
+                    </section>
+                    <section class="ml-panel ml-panel--chart">
                         <h2><i class="fas fa-chart-area" aria-hidden="true"></i> ${T.chart}</h2>
                         <svg class="ml-chart" id="chart" role="img" aria-label="${T.chart}"></svg>
                         <div class="ml-legend" id="chartLegend"></div>
                     </section>
                 </div>
-
-                <div class="ml-col">
+                <div class="ml-bottom">
+                    <div class="ml-col">
+                    <section class="ml-panel">
+                        <h2><i class="fas fa-user-doctor" aria-hidden="true"></i> ${T.scenario}</h2>
+                        <select class="ml-select" id="scenario" aria-label="${T.scenario}">
+                            <optgroup label="${T.groupAC}">${options('ac')}</optgroup>
+                            <optgroup label="${T.groupBC}">${options('bc')}</optgroup>
+                            <option value="RND" hidden>${T.random}</option>
+                        </select>
+                        <div class="ml-btn-row" style="margin-top:10px">
+                            <button type="button" class="ml-btn" id="rndAC"><i class="fas fa-shuffle" aria-hidden="true"></i> ${T.randomAC}</button>
+                            <button type="button" class="ml-btn" id="rndBC"><i class="fas fa-shuffle" aria-hidden="true"></i> ${T.randomBC}</button>
+                        </div>
+                        <span class="ml-field-label" style="margin-top:14px">${T.transducer}</span>
+                        <div class="ml-toggle" id="transducer">
+                            <button type="button" data-type="supra">${T.supra}</button>
+                            <button type="button" data-type="insert">${T.insert}</button>
+                        </div>
+                    </section>
+                    <section class="ml-panel">
+                        <h2><i class="fas fa-bullseye" aria-hidden="true"></i> ${T.task}</h2>
+                        <div class="ml-task" id="task"></div>
+                    </section>
+                    </div>
+                    <div class="ml-col">
                     <section class="ml-panel">
                         <h2><i class="fas fa-table-list" aria-hidden="true"></i> ${T.log}</h2>
                         <div class="ml-log-wrap" id="logWrap"></div>
                         <button type="button" class="ml-btn ml-btn--ghost" id="clearBtn" style="margin-top:8px"><i class="fas fa-eraser" aria-hidden="true"></i> ${T.clear}</button>
                     </section>
+                    </div>
+                    <div class="ml-col">
                     <section class="ml-panel ml-panel--dark">
                         <h2><i class="fas fa-pen-to-square" aria-hidden="true"></i> ${T.answer}</h2>
                         <div class="ml-answer-fields">
@@ -458,7 +455,12 @@
                         <h2><i class="fas fa-clipboard-check" aria-hidden="true"></i> ${T.feedback}</h2>
                         <div id="feedback" aria-live="polite"></div>
                     </section>
+                    </div>
                 </div>
+                    <details class="ml-panel ml-rules">
+                        <summary>${T.method}</summary>
+                        ${T.methodBody}
+                    </details>
             </div>`;
 
         $('#scenario').addEventListener('change', e => {
@@ -642,7 +644,7 @@
         const reveal = state.checked && (sol.type === 'plateau' || sol.trueThr === NR);
         const maskedKind = (sc.mode === 'ac' ? 'acm' : 'bcm') + sc.test;
         if (reveal) add(maskedKind, sol.trueThr);
-        drawStrip($('#strip'), { labels: { right: T.earCap.R.toUpperCase(), left: T.earCap.L.toUpperCase() }, symbols: symbols });
+        drawStrip($('#strip'), { labels: { right: T.earCap.R.toUpperCase(), left: T.earCap.L.toUpperCase() }, symbols: symbols, fontScale: 1.8 });
         $('#stripFreq').textContent = '· ' + sc.freq + ' Hz';
 
         const glyph = { acR: 'O', acL: 'X', bcR: '&lt;', bcL: '&gt;', acmR: '△', acmL: '□', bcmR: '[', bcmL: ']' };
@@ -694,7 +696,8 @@
         wrap.scrollTop = wrap.scrollHeight;
     }
 
-    const C = { w: 560, h: 390, l: 54, r: 14, t: 18, b: 46 };
+    const C = { w: 560, h: 480, l: 76, r: 14, t: 18, b: 68 };
+    const FS = 1.75;   // chart text scale, sized for projection
     function drawChart() {
         const el = $('#chart');
         el.setAttribute('viewBox', `0 0 ${C.w} ${C.h}`);
@@ -716,16 +719,16 @@
 
         for (let db = Math.ceil(yMin / 10) * 10; db <= yMax; db += 10) {
             el.appendChild(svg('line', { x1: C.l, x2: C.w - C.r, y1: Y(db), y2: Y(db), stroke: '#eef2f7' }));
-            el.appendChild(svg('text', { x: C.l - 6, y: Y(db) + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#94a3b8' }, String(db)));
+            el.appendChild(svg('text', { x: C.l - 6, y: Y(db) + 6, 'text-anchor': 'end', 'font-size': 11 * FS, fill: '#64748b' }, String(db)));
         }
         for (let m = 0; m <= LIM.noiseMax; m += 10) {
             el.appendChild(svg('line', { x1: X(m), x2: X(m), y1: C.t, y2: bottom, stroke: '#eef2f7' }));
-            el.appendChild(svg('text', { x: X(m), y: bottom + 15, 'text-anchor': 'middle', 'font-size': 11, fill: '#94a3b8' }, String(m)));
+            el.appendChild(svg('text', { x: X(m), y: bottom + 24, 'text-anchor': 'middle', 'font-size': 11 * FS, fill: '#64748b' }, String(m)));
         }
         el.appendChild(svg('line', { x1: (xOff + x0) / 2 - 4, x2: (xOff + x0) / 2 - 4, y1: C.t, y2: bottom, stroke: '#cbd5e1', 'stroke-dasharray': '3 4' }));
-        el.appendChild(svg('text', { x: xOff, y: bottom + 15, 'text-anchor': 'middle', 'font-size': 10, fill: '#94a3b8' }, T.chartOff));
-        el.appendChild(svg('text', { x: (x0 + x1) / 2, y: C.h - 8, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 600, fill: '#64748b' }, T.chartX));
-        el.appendChild(svg('text', { x: 14, y: (C.t + bottom) / 2, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 600, fill: '#64748b', transform: `rotate(-90 14 ${(C.t + bottom) / 2})` }, T.chartY));
+        el.appendChild(svg('text', { x: xOff, y: bottom + 24, 'text-anchor': 'middle', 'font-size': 10 * FS, fill: '#64748b' }, T.chartOff));
+        el.appendChild(svg('text', { x: (x0 + x1) / 2, y: C.h - 8, 'text-anchor': 'middle', 'font-size': 12 * FS, 'font-weight': 600, fill: '#64748b' }, T.chartX));
+        el.appendChild(svg('text', { x: 20, y: (C.t + bottom) / 2, 'text-anchor': 'middle', 'font-size': 12 * FS, 'font-weight': 600, fill: '#64748b', transform: `rotate(-90 20 ${(C.t + bottom) / 2})` }, T.chartY));
 
         if (showSol) {
             const pts = [];
@@ -738,13 +741,13 @@
             if (pts.length > 1) el.appendChild(svg('polyline', { points: pts.join(' '), fill: 'none', stroke: '#0f766e', 'stroke-width': 2.2, 'stroke-linejoin': 'round' }));
             if (sol.type === 'plateau') {
                 const label = (text, xa, xb, y) => {
-                    if (xb - xa < 62) return;
-                    el.appendChild(svg('text', { x: (xa + xb) / 2, y: y, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: '#0f766e' }, text));
+                    if (xb - xa < 62 * FS) return;
+                    el.appendChild(svg('text', { x: (xa + xb) / 2, y: y, 'text-anchor': 'middle', 'font-size': 10 * FS, 'font-weight': 700, fill: '#0f766e' }, text));
                 };
                 // The curve runs below the plateau level while undermasking and above it while
                 // overmasking, so the labels go on the free side of the line.
                 const above = Math.max(C.t + 12, Y(sol.trueThr) - 12);
-                const below = Math.min(bottom - 8, Y(sol.trueThr) + 20);
+                const below = Math.min(bottom - 8, Y(sol.trueThr) + 24);
                 label(T.plateau, X(sol.first) - half, X(sol.last) + half, above);
                 label(T.under, X(0) - half, X(sol.first) - half, above);
                 label(T.over, X(sol.last) + half, X(LIM.noiseMax) + half, below);
