@@ -176,7 +176,7 @@
             present: 'TON VER',
             lampIdle: 'Cevap bekleniyor', lampYes: 'CEVAP VAR (+)', lampNo: 'CEVAP YOK (−)',
             chart: 'Plato grafiği', chartX: 'Maske seviyesi (dB)', chartY: 'Sinyal seviyesi (dB HL)', chartOff: 'kapalı',
-            lgHeard: 'cevap var', lgNot: 'cevap yok', lgCur: 'şu anki ayar', lgSol: 'gerçek eşik eğrisi', lgBand: 'plato',
+            lgStim: 'uyaran seviyesi', lgOwn: 'senin cevabın', lgTrue: 'gerçek eşik', lgHeard: 'cevap var', lgNot: 'cevap yok', lgCur: 'şu anki ayar', lgSol: 'gerçek eşik eğrisi', lgBand: 'plato',
             under: 'yetersiz maske', plateau: 'PLATO', over: 'aşırı maske',
             log: 'Uygulama tablosu', logM: 'Maske seviyesi', logL: 'Sinyal seviyesi', logR: 'Cevap',
             logEmpty: 'Henüz deneme yok. Maske ve sinyal seviyesini ayarlayıp “TON VER” düğmesine bas.',
@@ -268,7 +268,7 @@
             present: 'PRESENT TONE',
             lampIdle: 'Waiting for response', lampYes: 'RESPONSE (+)', lampNo: 'NO RESPONSE (−)',
             chart: 'Plateau chart', chartX: 'Masker level (dB)', chartY: 'Signal level (dB HL)', chartOff: 'off',
-            lgHeard: 'response', lgNot: 'no response', lgCur: 'current setting', lgSol: 'true threshold curve', lgBand: 'plateau',
+            lgStim: 'stimulus level', lgOwn: 'your answer', lgTrue: 'true threshold', lgHeard: 'response', lgNot: 'no response', lgCur: 'current setting', lgSol: 'true threshold curve', lgBand: 'plateau',
             under: 'undermasking', plateau: 'PLATEAU', over: 'overmasking',
             log: 'Trial table', logM: 'Masker level', logL: 'Signal level', logR: 'Response',
             logEmpty: 'No trials yet. Set the masker and signal levels and press “PRESENT TONE”.',
@@ -493,7 +493,8 @@
             renderLog();
             drawChart();
         });
-        root.querySelectorAll('input[name="aType"]').forEach(r => r.addEventListener('change', syncAnswerFields));
+        root.querySelectorAll('input[name="aType"]').forEach(r => r.addEventListener('change', () => { syncAnswerFields(); renderStrip(); }));
+        $('#aThr').addEventListener('input', renderStrip);
         $('#checkBtn').addEventListener('click', check);
     }
 
@@ -527,6 +528,7 @@
         state.tone = Math.max(LIM.toneMin, Math.min(sol.toneMax, value));
         state.last = null;
         renderAudiometer();
+        renderStrip();
         drawChart();
     }
 
@@ -584,6 +586,7 @@
         mark('aMbs', res.mbs);
         mark('aOver', res.over);
         mark('aThr', type === 'plateau' ? (sol.type === 'plateau' ? res.thr : false) : undefined);
+        renderTask();
         renderStrip();
         drawChart();
         renderFeedback();
@@ -611,8 +614,10 @@
     function renderTask() {
         const sc = state.scenario;
         const row = (label, r, l) => `<tr><td>${label}</td><td class="ml-ear-r">${r}</td><td class="ml-ear-l">${l}</td></tr>`;
+        // The masked bone threshold is part of the answer, so it shows only after checking
+        const maskedBcText = state.checked ? fmtDb(sol.teBcKnown ? sol.te.bc : NR) : '?';
         const maskedBc = sc.mode === 'ac'
-            ? row(T.rowBCm, sc.test === 'R' ? fmtDb(sol.teBcKnown ? sol.te.bc : NR) : '—', sc.test === 'L' ? fmtDb(sol.teBcKnown ? sol.te.bc : NR) : '—')
+            ? row(T.rowBCm, sc.test === 'R' ? maskedBcText : '—', sc.test === 'L' ? maskedBcText : '—')
             : '';
         $('#task').innerHTML = `
             <dl>
@@ -635,24 +640,38 @@
     function renderStrip() {
         const sc = state.scenario;
         const symbols = [];
-        const add = (kind, db) => symbols.push(db === NR ? { kind: kind, nr: true } : { kind: kind, db: db });
+        const add = (kind, db, extra) => symbols.push(Object.assign(db === NR ? { kind: kind, nr: true } : { kind: kind, db: db }, extra));
+        const maskedKind = (sc.mode === 'ac' ? 'acm' : 'bcm') + sc.test;
+        // Masked thresholds stay hidden until the student checks the answer; then the true
+        // values appear pale so they can be compared with the student's own marking.
+        const faint = { faint: true };
         if (sol.bcUnm !== NR) { add('bcR', sol.bcUnm); add('bcL', sol.bcUnm); }
-        if (sc.mode === 'ac') add('bcm' + sc.test, sol.teBcKnown ? sol.te.bc : NR);
+        if (sc.mode === 'ac' && state.checked) add('bcm' + sc.test, sol.teBcKnown ? sol.te.bc : NR, faint);
         add('acR', sol.acUnm.R);
         add('acL', sol.acUnm.L);
-        // After checking, show the masked result of this task on the audiogram.
+
+        // The student's own masked threshold, drawn solid as soon as it is entered
+        const own = $('#aThr').value.trim();
+        const showOwn = own !== '' && !$('#aThr').disabled && !isNaN(Number(own));
+        if (showOwn) add(maskedKind, Math.max(LIM.toneMin, Math.min(sol.toneMax, Number(own))));
+
         const reveal = state.checked && (sol.type === 'plateau' || sol.trueThr === NR);
-        const maskedKind = (sc.mode === 'ac' ? 'acm' : 'bcm') + sc.test;
-        if (reveal) add(maskedKind, sol.trueThr);
+        if (reveal) add(maskedKind, sol.trueThr, faint);
+
+        // Current stimulus level
+        if (!state.checked) add('stim' + sc.test, state.tone, { bone: sc.mode === 'bc' });
+
         drawStrip($('#strip'), { labels: { right: T.earCap.R.toUpperCase(), left: T.earCap.L.toUpperCase() }, symbols: symbols, fontScale: 1.8 });
         $('#stripFreq').textContent = '· ' + sc.freq + ' Hz';
 
         const glyph = { acR: 'O', acL: 'X', bcR: '&lt;', bcL: '&gt;', acmR: '△', acmL: '□', bcmR: '[', bcmL: ']' };
-        const kinds = ['acR', 'bcR', 'acL', 'bcL'];
-        if (sc.mode === 'ac') kinds.push('bcm' + sc.test);
-        if (reveal && kinds.indexOf(maskedKind) === -1) kinds.push(maskedKind);
-        $('#stripLegend').innerHTML = kinds.map(k =>
-            `<span><b class="${k.slice(-1) === 'R' ? 'r' : 'l'}">${glyph[k]}</b>${T.legend[k]}</span>`).join('');
+        const item = (k, text, cls) => `<span${cls ? ` class="${cls}"` : ''}><b class="${k.slice(-1) === 'R' ? 'r' : 'l'}">${glyph[k] || '◯'}</b>${text}</span>`;
+        const items = ['acR', 'bcR', 'acL', 'bcL'].map(k => item(k, T.legend[k]));
+        if (!state.checked) items.push(item('stim' + sc.test, T.lgStim, 'is-faint'));
+        if (showOwn) items.push(item(maskedKind, T.legend[maskedKind] + ' · ' + T.lgOwn));
+        if (state.checked && sc.mode === 'ac') items.push(item('bcm' + sc.test, T.legend['bcm' + sc.test] + ' · ' + T.lgTrue, 'is-faint'));
+        if (reveal) items.push(item(maskedKind, T.legend[maskedKind] + ' · ' + T.lgTrue, 'is-faint'));
+        $('#stripLegend').innerHTML = items.join('');
     }
 
     function renderAudiometer() {

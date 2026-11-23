@@ -1093,3 +1093,8 @@
 .ml-app--plateau .ml-log-wrap {
     max-height: 340px;
 }
+
+/* Pale legend entries: current stimulus level and true thresholds shown after checking */
+.ml-legend .is-faint {
+    opacity: 0.55;
+}

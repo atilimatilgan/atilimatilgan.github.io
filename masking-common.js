@@ -39,6 +39,15 @@
         const group = svg('g', {});
         const base = sym.kind.replace(/[RL]/, '');
 
+        if (base === 'stim') {
+            // Current stimulus level: faint filled circle on the test ear's air or bone position
+            const sx = sym.bone ? bx : CX;
+            group.appendChild(svg('circle', { cx: sx, cy: y, r: 12, fill: color, 'fill-opacity': 0.14, stroke: color, 'stroke-opacity': 0.5, 'stroke-width': 1.6, 'stroke-dasharray': '3 3' }));
+            parent.appendChild(group);
+            return;
+        }
+        if (sym.faint) group.setAttribute('opacity', 0.35);
+
         if (base === 'ac') {
             if (right) {
                 group.appendChild(svg('circle', Object.assign({ cx: CX, cy: y, r: 9 }, stroke)));
@@ -102,7 +111,9 @@
     }
 
     /* opts: { labels: {right, left}, symbols: [{kind, db, nr}], dims: [{slot, from, to, label, caption, color, active}] }
-       kind: acR | acL | bcR | bcL (unmasked), acmR | acmL | bcmR | bcmL (masked) */
+       kind: acR | acL | bcR | bcL (unmasked), acmR | acmL | bcmR | bcmL (masked),
+             stimR | stimL (current stimulus level; bone: true puts it on the bone side)
+       faint: true draws the symbol pale (e.g. the true threshold shown after checking) */
     function drawStrip(svgEl, opts) {
         // fontScale > 1 (plateau app, for projection) enlarges the text and moves the
         // ear labels over their own half so they cannot collide with "dB HL".
