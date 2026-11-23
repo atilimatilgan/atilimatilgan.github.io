@@ -4,7 +4,11 @@
      MBS (bone) = TEK_HE + 10 dB + OE
      M_maks     = TK_KY + IA
      Plateau    = threshold unchanged over at least 15 dB of masker increase (3 steps of 5 dB)
-   The simulated patient reproduces the worked examples on slides 25 and 31. */
+   The simulated patient reproduces the worked examples on slides 25 and 31.
+   Each case is one patient at one frequency: the student first decides which
+   measurements need masking, then masks air conduction, then bone conduction.
+   Overmasking (M_maks) needs the masked bone threshold, so it is asked in the
+   bone step and the earlier air plateau is checked against it. */
 (function () {
     'use strict';
 
@@ -15,23 +19,21 @@
     const FREQS = [250, 500, 1000, 2000, 4000];
     const OE_SUPRA = { 250: 15, 500: 15, 1000: 10, 2000: 0, 4000: 0 };
 
-    // id, mode, frequency, test ear, earphone, right [air, bone], left [air, bone]  (true thresholds)
-    const S = (id, mode, freq, test, transducer, R, L) =>
-        ({ id, mode, freq, test, transducer, R: { ac: R[0], bc: R[1] }, L: { ac: L[0], bc: L[1] } });
-    const PRESETS = [
-        S('D1', 'ac', 500, 'R', 'supra', [65, 50], [0, 0]),      // slide 25
-        S('H1', 'ac', 1000, 'R', 'supra', [60, 60], [5, 5]),
-        S('H2', 'ac', 2000, 'L', 'supra', [10, 10], [60, 10]),
-        S('H3', 'ac', 4000, 'R', 'supra', [55, 55], [15, 15]),
-        S('H4', 'ac', 1000, 'L', 'supra', [50, 15], [55, 20]),   // bilateral conductive case from the notes
-        S('H5', 'ac', 500, 'L', 'supra', [5, 5], [NR, NR]),
-        S('H6', 'ac', 2000, 'R', 'insert', [85, 45], [20, 20]),
-        S('D2', 'bc', 500, 'R', 'supra', [50, 30], [0, 0]),      // slide 31
-        S('K1', 'bc', 1000, 'R', 'supra', [50, 10], [10, 10]),
-        S('K2', 'bc', 2000, 'L', 'supra', [10, 10], [55, 55]),
-        S('K3', 'bc', 250, 'R', 'supra', [80, 40], [15, 15]),
-        S('K4', 'bc', 1000, 'R', 'supra', [50, 15], [55, 20]),   // bilateral conductive case from the notes
-        S('K5', 'bc', 500, 'R', 'supra', [NR, NR], [10, 10])
+    // Case: id, frequency, earphone, right [air, bone], left [air, bone]  (true thresholds)
+    const P = (id, freq, transducer, R, L) =>
+        ({ id, freq, transducer, R: { ac: R[0], bc: R[1] }, L: { ac: L[0], bc: L[1] } });
+    const CASES = [
+        P('D1', 500, 'supra', [65, 50], [0, 0]),       // slide 25 (air example)
+        P('D2', 500, 'supra', [50, 30], [0, 0]),       // slide 31 (bone example)
+        P('V1', 1000, 'supra', [60, 60], [5, 5]),
+        P('V2', 2000, 'supra', [10, 10], [60, 10]),
+        P('V3', 4000, 'supra', [55, 55], [15, 15]),
+        P('V4', 1000, 'supra', [50, 10], [10, 10]),
+        P('V5', 2000, 'supra', [10, 10], [55, 55]),
+        P('V6', 250, 'supra', [80, 40], [15, 15]),
+        P('V7', 2000, 'insert', [85, 45], [20, 20]),
+        P('V8', 1000, 'supra', [50, 15], [55, 20]),    // bilateral conductive case from the notes
+        P('V9', 500, 'supra', [5, 5], [NR, NR])        // dead ear: shadow curve
     ];
 
     /* ---------- Patient model ---------- */
@@ -122,21 +124,69 @@
             if (!fallback) fallback = sc;
             if (s.type === want) return sc;
         }
-        return fallback || PRESETS[0];
+        return fallback || Object.assign({ test: 'R', mode: 'ac' }, CASES[0]);
     }
+
+
+    /* ---------- Masking decision and steps of a case ---------- */
+    // Decision rules from the notes, on the unmasked audiogram:
+    //   air:  TK_HE − TEK_KY ≥ IA      bone: TK_HE − KY > 10
+    // The unmasked bone threshold is the better cochlea, so it is the same for both ears.
+    function needsOf(c, transducer) {
+        const ia = IA[transducer];
+        const cap = (v, max) => (v > max ? NR : v);
+        const acUnm = { R: cap(Math.min(c.R.ac, ia + c.L.bc), 120), L: cap(Math.min(c.L.ac, ia + c.R.bc), 120) };
+        const bcUnm = cap(Math.min(c.R.bc, c.L.bc), 70);
+        const ok = ear => acUnm[ear] !== NR && bcUnm !== NR;
+        const need = {
+            Rac: ok('R') && acUnm.R - bcUnm >= ia,
+            Lac: ok('L') && acUnm.L - bcUnm >= ia,
+            Rbc: ok('R') && acUnm.R - bcUnm > 10,
+            Lbc: ok('L') && acUnm.L - bcUnm > 10
+        };
+        return { ia, acUnm, bcUnm, need };
+    }
+
+    // Steps in teaching order: air conduction first, then bone conduction.
+    function caseSteps(c, transducer) {
+        const need = needsOf(c, transducer).need;
+        return [['R', 'ac'], ['L', 'ac'], ['R', 'bc'], ['L', 'bc']]
+            .filter(([ear, mode]) => need[ear + mode])
+            .map(([ear, mode]) => ({ ear, mode, sol: solve(Object.assign({}, c, { test: ear, mode: mode }), transducer) }));
+    }
+
+    function randomCase(transducer) {
+        const sc = randomScenario('ac', transducer);
+        return { id: 'RND', freq: sc.freq, transducer: transducer, R: sc.R, L: sc.L };
+    }
+
 
     /* ---------- Text ---------- */
     const fmtDb = v => (v === NR ? (LANG === 'tr' ? 'cevap yok' : 'no response') : String(v));
     const STR = {
         tr: {
             title: 'Maske Uygulaması',
-            subtitle: 'Plato yöntemi: başlangıç seviyesini hesapla, maskeyi adım adım artır, platoyu bul ve maskeli eşiği yaz.',
+            subtitle: 'Önce hangi ölçümlere maske gerektiğine karar ver; sonra önce hava, ardından kemik yolu için platoyu bul.',
             altHref: 'app-plateau-en.html',
             prev: 'Maskeleme Karar Laboratuvarı', prevHref: 'app-masking-tr.html',
-            scenario: 'Senaryo', groupAC: 'Hava yolu', groupBC: 'Kemik yolu',
-            presetName: { D1: 'Ders örneği: hava yolu', D2: 'Ders örneği: kemik yolu' },
-            ac: 'Hava', bc: 'Kemik', random: 'Rastgele vaka',
-            randomAC: 'Rastgele hava', randomBC: 'Rastgele kemik',
+            scenario: 'Vaka',
+            presetName: { D1: 'Ders örneği 1 (slayt 25)', D2: 'Ders örneği 2 (slayt 31)' },
+            caseN: n => `Vaka ${n}`, random: 'Rastgele vaka',
+            modeShort: { ac: 'hava', bc: 'kemik' },
+            stepDecide: 'Maske kararı', decideTitle: 'Hangi ölçümlerde maske gerekir?', decideFirst: 'önce maske kararını ver',
+            opt: { Rac: 'Sağ hava yolu', Lac: 'Sol hava yolu', Rbc: 'Sağ kemik yolu', Lbc: 'Sol kemik yolu' },
+            decideHint: 'Maske gereken ölçümlerin hepsini işaretle. Hiçbiri gerekmiyorsa boş bırak.',
+            decideWaiting: 'Maskesiz eşiklere bak, maske gereken ölçümleri seç ve<br>“KONTROL ET” düğmesine bas.',
+            decideOk: 'Karar doğru!',
+            ruleAir: (ear, a, b, d, ia, need) => `${ear} hava: TK<sub>HE</sub> − TEK<sub>KY</sub> = ${a} − ${b} = ${d} dB ${need ? '≥' : '<'} IA (${ia}) → <b>${need ? 'maske gerekir' : 'gerekmez'}</b>`,
+            ruleBone: (ear, a, b, d, need) => `${ear} kemik: TK<sub>HE</sub> − KY = ${a} − ${b} = ${d} dB ${need ? '>' : '≤'} 10 → <b>${need ? 'maske gerekir' : 'gerekmez'}</b>`,
+            ruleNA: opt => `${opt}: maskesiz cevap yok → <b>gerekmez</b>`,
+            orderNote: list => `Uygulama sırası: önce hava, sonra kemik yolu. Bu vakada: <b>${list}</b>.`,
+            noMasking: 'Bu vakada maske gerekmiyor.',
+            startMasking: 'Maskelemeye başla', nextStep: name => `Sonraki adım: ${name}`, nextCase: 'Sonraki vaka',
+            caseDone: 'Vaka tamamlandı.', dilemmaShort: 'ikilem',
+            lampLocked: 'Önce maske kararı',
+            overLater: 'Aşırı maske seviyesi bu kulağın maskeli kemik eşiğine bağlıdır; kemik yolu adımında hesaplanacak.',
             transducer: 'Kulaklık tipi', supra: 'Kulak üstü (IA 40)', insert: 'Kulak içi (IA 50)',
             task: 'Görev',
             tFreq: 'Frekans', tTest: 'Test', tMask: 'Maske', tPhone: 'Kulaklık',
@@ -144,7 +194,7 @@
             modeLow: { ac: 'hava yolu', bc: 'kemik yolu' },
             maskTo: ear => `${ear} kulağa dar bant gürültü`,
             phone: { supra: 'kulak üstü, IA 40 dB', insert: 'kulak içi, IA 50 dB' },
-            thrTitle: 'Eşikler (dB HL)', rowAC: 'Hava (maskesiz)', rowBC: 'Kemik (maskesiz)', rowBCm: 'Kemik (maskeli)',
+            thrTitle: 'Eşikler (dB HL)', rowAC: 'Hava (maskesiz)', rowBC: 'Kemik (maskesiz)', rowACm: 'Hava (maskeli)', rowBCm: 'Kemik (maskeli)',
             notNeeded: 'Not: bu kulaklıkla karar kuralına göre maske gerekmez (fark sınırın altında). Yine de deneyebilirsin; eşik kaymayacaktır.',
             audiogram: 'Odyogram',
             legend: { acR: 'Sağ hava', acL: 'Sol hava', bcR: 'Sağ kemik', bcL: 'Sol kemik', acmR: 'Sağ hava (maskeli)', acmL: 'Sol hava (maskeli)', bcmR: 'Sağ kemik (maskeli)', bcmL: 'Sol kemik (maskeli)' },
@@ -156,7 +206,7 @@
                         Kemik: <span class="ml-formula">MBS = TEK<sub>HE</sub> + 10 dB + OE</span></li>
                     <li>Gürültüyü MBS’den başlat ve tonu ver. Hasta <strong>duymazsa tonu 5 dB</strong> artır; <strong>duyarsa gürültüyü 5 dB</strong> (ya da 10 dB) artır.</li>
                     <li><strong>Plato:</strong> gürültü 3 adım üst üste (en az 15–20 dB) arttığı halde eşik değişmiyorsa plato bulunmuştur. Bu eşik maskeli (gerçek) eşiktir.</li>
-                    <li><strong>Aşırı maskeleme:</strong> <span class="ml-formula">M<sub>maks</sub> = TK<sub>KY</sub> + IA</span>. Bu seviyenin üzerinde gürültü test kulağına geçer ve eşik yeniden kötüleşir.</li>
+                    <li><strong>Aşırı maskeleme:</strong> <span class="ml-formula">M<sub>maks</sub> = TK<sub>KY</sub> (maskeli) + IA</span>. Bu seviyenin üzerinde gürültü test kulağına geçer ve eşik yeniden kötüleşir. Maskeli kemik eşiği gerektiği için kemik yolu adımında hesaplanır; hava yolu platosu da bu sınıra göre kontrol edilir.</li>
                     <li><strong>Maskeleme ikilemi:</strong> MBS, aşırı maske seviyesinden yüksek çıkar. Risk varsa MBS, test edilmeyen kulağın eşik seviyesinden başlatılabilir.</li>
                 </ol>
                 <table class="ml-thr-table">
@@ -176,14 +226,14 @@
             present: 'TON VER',
             lampIdle: 'Cevap bekleniyor', lampYes: 'CEVAP VAR (+)', lampNo: 'CEVAP YOK (−)',
             chart: 'Plato grafiği', chartX: 'Maske seviyesi (dB)', chartY: 'Sinyal seviyesi (dB HL)', chartOff: 'kapalı',
-            lgStim: 'uyaran seviyesi', lgOwn: 'senin cevabın', lgTrue: 'gerçek eşik', lgHeard: 'cevap var', lgNot: 'cevap yok', lgCur: 'şu anki ayar', lgSol: 'gerçek eşik eğrisi', lgBand: 'plato',
+            lgStim: 'uyaran seviyesi', lgOwn: 'senin cevabın', lgOwnOk: 'senin cevabın (doğru)', lgTrue: 'gerçek eşik', lgHeard: 'cevap var', lgNot: 'cevap yok', lgCur: 'şu anki ayar', lgSol: 'gerçek eşik eğrisi', lgBand: 'plato',
             under: 'yetersiz maske', plateau: 'PLATO', over: 'aşırı maske',
             log: 'Uygulama tablosu', logM: 'Maske seviyesi', logL: 'Sinyal seviyesi', logR: 'Cevap',
             logEmpty: 'Henüz deneme yok. Maske ve sinyal seviyesini ayarlayıp “TON VER” düğmesine bas.',
             clear: 'Tabloyu temizle',
             answer: 'Cevap penceresi',
             aMbs: 'Maske Başlangıç Seviyesi (dB)',
-            aOver: 'Aşırı Maske Seviyesi, teoride (dB)',
+            aOver: 'Aşırı Maske Seviyesi (dB)',
             aOverNA: 'Test kulağında kemik cevabı yok: hesaplanamaz',
             aType: 'Sonuç',
             aPlateau: 'Plato bulundu',
@@ -205,6 +255,10 @@
                 supra: (f, oe) => `${f} Hz, kulak üstü kulaklık: OE = ${oe}`,
                 insert: (f, oe) => `${f} Hz, kulak içi kulaklık: OE = ${oe}`
             },
+            exOverBone: (bc, ia, v) => `M<sub>maks</sub> = maskeli TK<sub>KY</sub> + IA = ${bc} + ${ia} = <b>${v} dB</b>. Bu seviyenin üzerinde aşırı maskeleme başlar.`,
+            exOverLater: 'Aşırı maske seviyesi için bu kulağın maskeli kemik yolu eşiği gerekir; kemik yolu adımında hesaplanacak. Bu arada plato yöntemi aşırı maskelemeyi zaten gösterir: gürültü arttıkça eşik yeniden yükselmeye başlar.',
+            exAirCheck: (f, l, v) => `Hava yolu adımındaki plato ${f}–${l} dB maske aralığındaydı ve bu sınırın (${v} dB) altında kaldı; hava yolu eşiği güvenilir.`,
+            exAirCheckNo: 'Hava yolu adımında plato bulunamamıştı; bu sınır o adımda neden plato oluşmadığını açıklar.',
             exOverAC: (bc, ia, v) => `M<sub>maks</sub> = TK<sub>KY</sub> + IA = ${bc} + ${ia} = <b>${v} dB</b>. Bu seviyenin üzerinde aşırı maskeleme başlar.`,
             exOverACna: 'Test kulağında maskeli kemik cevabı yok; gürültünün karşıya geçip maskeleyebileceği bir koklear cevap olmadığından aşırı maskeleme beklenmez.',
             exOverBC: (bc, ia, v) => `Teoride: maskesiz KY + IA = ${bc} + ${ia} = <b>${v} dB</b>. Maskesiz kemik eşiği hangi kokleaya ait olduğu bilinmeden kullanılan en güvenli (en düşük) sınırdır.`,
@@ -219,17 +273,31 @@
             exDead: max => `Maske arttıkça eşik aynı miktarda kaydı ve sinyal cihaz sınırına (${max} dB HL) ulaştığında cevap kayboldu. Maskesiz cevapların tümü test edilmeyen kulağa aitti (gölge eğrisi). Test kulağında ölçülebilir eşik yok; odyograma maskeli “cevap yok” sembolü işlenir.`,
             exNoiseLimit: n => `Yeterli maske düzeyine ulaşmadan cihazın maske sınırına (${n} dB) gelindi; güvenilir plato elde edilemedi.`,
             typeName: { plateau: 'Plato bulundu', dilemma: 'Maskeleme ikilemi', limit: 'Cihaz sınırında cevap yok' },
-            item: { mbs: 'MBS', over: 'Aşırı maske (teoride)', type: 'Sonuç', thr: 'Maskeli eşik' }
+            item: { mbs: 'MBS', over: 'Aşırı maske', type: 'Sonuç', thr: 'Maskeli eşik' }
         },
         en: {
             title: 'Masking Practice',
-            subtitle: 'Plateau method: work out the starting level, raise the masker step by step, find the plateau and enter the masked threshold.',
+            subtitle: 'First decide which measurements need masking; then find the plateau for air conduction first, then bone conduction.',
             altHref: 'app-plateau-tr.html',
             prev: 'Masking Decision Laboratory', prevHref: 'app-masking-en.html',
-            scenario: 'Scenario', groupAC: 'Air conduction', groupBC: 'Bone conduction',
-            presetName: { D1: 'Lecture example: air conduction', D2: 'Lecture example: bone conduction' },
-            ac: 'Air', bc: 'Bone', random: 'Random case',
-            randomAC: 'Random air', randomBC: 'Random bone',
+            scenario: 'Case',
+            presetName: { D1: 'Lecture example 1 (slide 25)', D2: 'Lecture example 2 (slide 31)' },
+            caseN: n => `Case ${n}`, random: 'Random case',
+            modeShort: { ac: 'air', bc: 'bone' },
+            stepDecide: 'Masking decision', decideTitle: 'Which measurements need masking?', decideFirst: 'make the masking decision first',
+            opt: { Rac: 'Right air conduction', Lac: 'Left air conduction', Rbc: 'Right bone conduction', Lbc: 'Left bone conduction' },
+            decideHint: 'Select every measurement that needs masking. Leave all empty if none does.',
+            decideWaiting: 'Look at the unmasked thresholds, select the measurements that need masking and<br>press “CHECK”.',
+            decideOk: 'Decision correct!',
+            ruleAir: (ear, a, b, d, ia, need) => `${ear} air: AC(test) − BC(non-test) = ${a} − ${b} = ${d} dB ${need ? '≥' : '<'} IA (${ia}) → <b>${need ? 'masking needed' : 'not needed'}</b>`,
+            ruleBone: (ear, a, b, d, need) => `${ear} bone: AC(test) − BC = ${a} − ${b} = ${d} dB ${need ? '>' : '≤'} 10 → <b>${need ? 'masking needed' : 'not needed'}</b>`,
+            ruleNA: opt => `${opt}: no unmasked response → <b>not needed</b>`,
+            orderNote: list => `Order: air conduction first, then bone conduction. In this case: <b>${list}</b>.`,
+            noMasking: 'No masking is needed in this case.',
+            startMasking: 'Start masking', nextStep: name => `Next step: ${name}`, nextCase: 'Next case',
+            caseDone: 'Case complete.', dilemmaShort: 'dilemma',
+            lampLocked: 'Masking decision first',
+            overLater: 'The overmasking level depends on this ear’s masked bone threshold; it is worked out in the bone-conduction step.',
             transducer: 'Earphones', supra: 'Supra-aural (IA 40)', insert: 'Insert (IA 50)',
             task: 'Task',
             tFreq: 'Frequency', tTest: 'Test', tMask: 'Masker', tPhone: 'Earphones',
@@ -237,7 +305,7 @@
             modeLow: { ac: 'air conduction', bc: 'bone conduction' },
             maskTo: ear => `narrow-band noise to the ${ear.toLowerCase()} ear`,
             phone: { supra: 'supra-aural, IA 40 dB', insert: 'insert, IA 50 dB' },
-            thrTitle: 'Thresholds (dB HL)', rowAC: 'Air (unmasked)', rowBC: 'Bone (unmasked)', rowBCm: 'Bone (masked)',
+            thrTitle: 'Thresholds (dB HL)', rowAC: 'Air (unmasked)', rowBC: 'Bone (unmasked)', rowACm: 'Air (masked)', rowBCm: 'Bone (masked)',
             notNeeded: 'Note: with these earphones the decision rule says no masking is needed (difference below the limit). You can still try; the threshold will not shift.',
             audiogram: 'Audiogram',
             legend: { acR: 'Right air', acL: 'Left air', bcR: 'Right bone', bcL: 'Left bone', acmR: 'Right air (masked)', acmL: 'Left air (masked)', bcmR: 'Right bone (masked)', bcmL: 'Left bone (masked)' },
@@ -249,7 +317,7 @@
                         Bone: <span class="ml-formula">IML = AC(non-test) + 10 dB + OE</span></li>
                     <li>Start the noise at the IML and present the tone. If the patient <strong>does not respond, raise the tone 5 dB</strong>; if they <strong>respond, raise the noise 5 dB</strong> (or 10 dB).</li>
                     <li><strong>Plateau:</strong> when the noise has gone up three steps in a row (at least 15–20 dB) and the threshold has not changed, you have the plateau. That threshold is the masked (true) threshold.</li>
-                    <li><strong>Overmasking:</strong> <span class="ml-formula">M<sub>max</sub> = BC(test) + IA</span>. Above this level the noise crosses to the test ear and the threshold gets worse again.</li>
+                    <li><strong>Overmasking:</strong> <span class="ml-formula">M<sub>max</sub> = masked BC(test) + IA</span>. Above this level the noise crosses to the test ear and the threshold gets worse again. It needs the masked bone threshold, so it is worked out in the bone step and the air plateau is checked against it.</li>
                     <li><strong>Masking dilemma:</strong> the IML comes out higher than the overmasking level. When there is a risk, the masker may be started at the non-test ear’s threshold.</li>
                 </ol>
                 <table class="ml-thr-table">
@@ -268,14 +336,14 @@
             present: 'PRESENT TONE',
             lampIdle: 'Waiting for response', lampYes: 'RESPONSE (+)', lampNo: 'NO RESPONSE (−)',
             chart: 'Plateau chart', chartX: 'Masker level (dB)', chartY: 'Signal level (dB HL)', chartOff: 'off',
-            lgStim: 'stimulus level', lgOwn: 'your answer', lgTrue: 'true threshold', lgHeard: 'response', lgNot: 'no response', lgCur: 'current setting', lgSol: 'true threshold curve', lgBand: 'plateau',
+            lgStim: 'stimulus level', lgOwn: 'your answer', lgOwnOk: 'your answer (correct)', lgTrue: 'true threshold', lgHeard: 'response', lgNot: 'no response', lgCur: 'current setting', lgSol: 'true threshold curve', lgBand: 'plateau',
             under: 'undermasking', plateau: 'PLATEAU', over: 'overmasking',
             log: 'Trial table', logM: 'Masker level', logL: 'Signal level', logR: 'Response',
             logEmpty: 'No trials yet. Set the masker and signal levels and press “PRESENT TONE”.',
             clear: 'Clear table',
             answer: 'Answer window',
             aMbs: 'Initial masking level (dB)',
-            aOver: 'Overmasking level, in theory (dB)',
+            aOver: 'Overmasking level (dB)',
             aOverNA: 'No bone response in the test ear: cannot be calculated',
             aType: 'Outcome',
             aPlateau: 'Plateau found',
@@ -297,6 +365,10 @@
                 supra: (f, oe) => `${f} Hz, supra-aural earphone: OE = ${oe}`,
                 insert: (f, oe) => `${f} Hz, insert earphone: OE = ${oe}`
             },
+            exOverBone: (bc, ia, v) => `M<sub>max</sub> = masked BC(test) + IA = ${bc} + ${ia} = <b>${v} dB</b>. Overmasking starts above this level.`,
+            exOverLater: 'The overmasking level needs this ear’s masked bone threshold; it is worked out in the bone-conduction step. Meanwhile the plateau method shows overmasking anyway: the threshold starts to rise again as the noise goes up.',
+            exAirCheck: (f, l, v) => `The plateau in the air step covered masker levels ${f}–${l} dB and stayed below this limit (${v} dB), so the air threshold is reliable.`,
+            exAirCheckNo: 'No plateau was found in the air step; this limit explains why.',
             exOverAC: (bc, ia, v) => `M<sub>max</sub> = BC(test) + IA = ${bc} + ${ia} = <b>${v} dB</b>. Overmasking starts above this level.`,
             exOverACna: 'There is no masked bone response in the test ear; with no cochlear response for the noise to mask, overmasking is not expected.',
             exOverBC: (bc, ia, v) => `In theory: unmasked BC + IA = ${bc} + ${ia} = <b>${v} dB</b>. This is the safest (lowest) limit you can use before knowing which cochlea the unmasked bone threshold belongs to.`,
@@ -311,39 +383,46 @@
             exDead: max => `The threshold shifted by the same amount as the masker and the response disappeared when the signal reached the equipment limit (${max} dB HL). All unmasked responses belonged to the non-test ear (shadow curve). There is no measurable threshold in the test ear; the masked “no response” symbol is recorded.`,
             exNoiseLimit: n => `The masker limit of the audiometer (${n} dB) was reached before a sufficient masking level; no reliable plateau could be obtained.`,
             typeName: { plateau: 'Plateau found', dilemma: 'Masking dilemma', limit: 'No response at the equipment limit' },
-            item: { mbs: 'IML', over: 'Overmasking (theory)', type: 'Outcome', thr: 'Masked threshold' }
+            item: { mbs: 'IML', over: 'Overmasking', type: 'Outcome', thr: 'Masked threshold' }
         }
     };
     const T = STR[LANG];
 
     /* ---------- State ---------- */
     const state = {
-        scenario: PRESETS[0],
-        transducer: PRESETS[0].transducer,
+        caseData: CASES[0],
+        transducer: CASES[0].transducer,
+        steps: [],           // masking steps of this case, air first then bone
+        phase: 'decide',     // 'decide' → 'step'
+        picks: {},           // decision answers, key = ear + mode (e.g. 'Rac')
+        decided: false,
+        stepIdx: 0,
+        results: [],         // per step: { res, own, type }
         tone: 0,
         noise: 0,
         noiseOn: false,
         log: [],             // { m: number|null, l: number, heard: boolean }
-        last: null,          // result of the latest presentation at the current settings
-        checked: false,
-        result: null
+        last: null,
+        checked: false       // current step checked
     };
-    let sol = null;
+    let sol = null;          // solution of the current (or first) step
 
     const root = document.getElementById('ml-app');
     const $ = sel => root.querySelector(sel);
     const earClass = ear => (ear === 'R' ? 'ml-ear-r' : 'ml-ear-l');
+    const KEYS = ['Rac', 'Lac', 'Rbc', 'Lbc'];
+    const stepName = st => `${T.earCap[st.ear]} ${T.modeShort[st.mode]}`;
+    const current = () => (state.phase === 'step' ? state.steps[state.stepIdx] : null);
 
-    function scenarioLabel(sc) {
-        if (sc.id === 'RND') return `${T.random} (${T[sc.mode].toLowerCase()})`;
-        if (T.presetName[sc.id]) return T.presetName[sc.id];
-        const sameMode = PRESETS.filter(p => p.mode === sc.mode && !T.presetName[p.id]);
-        return `${T[sc.mode]} ${sameMode.indexOf(sc) + 1}`;
+    function caseLabel(c) {
+        if (c.id === 'RND') return T.random;
+        if (T.presetName[c.id]) return T.presetName[c.id];
+        const plain = CASES.filter(p => !T.presetName[p.id]);
+        return T.caseN(plain.indexOf(c) + 1);
     }
 
     function build() {
-        const options = mode => PRESETS.filter(p => p.mode === mode)
-            .map(p => `<option value="${p.id}">${scenarioLabel(p)}</option>`).join('');
+        const opts = CASES.map(c => `<option value="${c.id}">${caseLabel(c)}</option>`).join('');
         root.innerHTML = `
             ${headerHTML({
                 title: T.title, subtitle: T.subtitle, altHref: T.altHref,
@@ -351,7 +430,7 @@
             })}
             <div class="ml-plateau">
                 <div class="ml-top">
-                    <section class="ml-panel">
+                    <section class="ml-panel" id="meter">
                         <h2><i class="fas fa-sliders" aria-hidden="true"></i> ${T.audiometer}</h2>
                         <div class="ml-audiometer">
                             <div class="ml-channel">
@@ -396,85 +475,99 @@
                 </div>
                 <div class="ml-bottom">
                     <div class="ml-col">
-                    <section class="ml-panel">
-                        <h2><i class="fas fa-user-doctor" aria-hidden="true"></i> ${T.scenario}</h2>
-                        <select class="ml-select" id="scenario" aria-label="${T.scenario}">
-                            <optgroup label="${T.groupAC}">${options('ac')}</optgroup>
-                            <optgroup label="${T.groupBC}">${options('bc')}</optgroup>
-                            <option value="RND" hidden>${T.random}</option>
-                        </select>
-                        <div class="ml-btn-row" style="margin-top:10px">
-                            <button type="button" class="ml-btn" id="rndAC"><i class="fas fa-shuffle" aria-hidden="true"></i> ${T.randomAC}</button>
-                            <button type="button" class="ml-btn" id="rndBC"><i class="fas fa-shuffle" aria-hidden="true"></i> ${T.randomBC}</button>
-                        </div>
-                        <span class="ml-field-label" style="margin-top:14px">${T.transducer}</span>
-                        <div class="ml-toggle" id="transducer">
-                            <button type="button" data-type="supra">${T.supra}</button>
-                            <button type="button" data-type="insert">${T.insert}</button>
-                        </div>
-                    </section>
-                    <section class="ml-panel">
-                        <h2><i class="fas fa-bullseye" aria-hidden="true"></i> ${T.task}</h2>
-                        <div class="ml-task" id="task"></div>
-                    </section>
+                        <section class="ml-panel">
+                            <h2><i class="fas fa-user-doctor" aria-hidden="true"></i> ${T.scenario}</h2>
+                            <select class="ml-select" id="scenario" aria-label="${T.scenario}">
+                                ${opts}
+                                <option value="RND" hidden>${T.random}</option>
+                            </select>
+                            <div class="ml-btn-row" style="margin-top:10px">
+                                <button type="button" class="ml-btn" id="rndBtn"><i class="fas fa-shuffle" aria-hidden="true"></i> ${T.random}</button>
+                            </div>
+                            <span class="ml-field-label" style="margin-top:14px">${T.transducer}</span>
+                            <div class="ml-toggle" id="transducer">
+                                <button type="button" data-type="supra">${T.supra}</button>
+                                <button type="button" data-type="insert">${T.insert}</button>
+                            </div>
+                        </section>
+                        <section class="ml-panel">
+                            <h2><i class="fas fa-bullseye" aria-hidden="true"></i> ${T.task}</h2>
+                            <div class="ml-task" id="task"></div>
+                        </section>
                     </div>
                     <div class="ml-col">
-                    <section class="ml-panel">
-                        <h2><i class="fas fa-table-list" aria-hidden="true"></i> ${T.log}</h2>
-                        <div class="ml-log-wrap" id="logWrap"></div>
-                        <button type="button" class="ml-btn ml-btn--ghost" id="clearBtn" style="margin-top:8px"><i class="fas fa-eraser" aria-hidden="true"></i> ${T.clear}</button>
-                    </section>
+                        <section class="ml-panel">
+                            <h2><i class="fas fa-table-list" aria-hidden="true"></i> ${T.log}</h2>
+                            <div class="ml-log-wrap" id="logWrap"></div>
+                            <button type="button" class="ml-btn ml-btn--ghost" id="clearBtn" style="margin-top:8px"><i class="fas fa-eraser" aria-hidden="true"></i> ${T.clear}</button>
+                        </section>
                     </div>
                     <div class="ml-col">
-                    <section class="ml-panel ml-panel--dark">
-                        <h2><i class="fas fa-pen-to-square" aria-hidden="true"></i> ${T.answer}</h2>
-                        <div class="ml-answer-fields">
-                            <div>
-                                <label for="aMbs">${T.aMbs}</label>
-                                <input class="ml-input" id="aMbs" type="number" step="5" inputmode="numeric">
+                        <section class="ml-panel ml-panel--dark">
+                            <h2><i class="fas fa-pen-to-square" aria-hidden="true"></i> <span id="answerTitle"></span></h2>
+                            <div id="decideForm">
+                                ${KEYS.map(k => `
+                                    <button type="button" class="ml-option ${k[0] === 'R' ? 'is-right' : 'is-left'}" data-key="${k}" aria-pressed="false">
+                                        <span>${T.opt[k]}</span><i class="far fa-square" aria-hidden="true"></i>
+                                    </button>`).join('')}
+                                <p class="ml-note" style="color:#cbd5e1;margin:4px 0 12px">${T.decideHint}</p>
+                                <button type="button" class="ml-btn ml-btn--primary" id="decideBtn">${T.check}</button>
                             </div>
-                            <div>
-                                <label for="aOver">${T.aOver}</label>
-                                <input class="ml-input" id="aOver" type="number" step="5" inputmode="numeric">
+                            <div id="stepForm">
+                                <div class="ml-answer-fields">
+                                    <div id="mbsWrap">
+                                        <label for="aMbs">${T.aMbs}</label>
+                                        <input class="ml-input" id="aMbs" type="number" step="5" inputmode="numeric">
+                                    </div>
+                                    <div id="overWrap">
+                                        <label for="aOver">${T.aOver}</label>
+                                        <input class="ml-input" id="aOver" type="number" step="5" inputmode="numeric">
+                                    </div>
+                                </div>
+                                <p class="ml-note" id="overLater" style="color:#cbd5e1;margin:0 0 10px">${T.overLater}</p>
+                                <span class="ml-field-label" style="color:#cbd5e1">${T.aType}</span>
+                                <label class="ml-radio"><input type="radio" name="aType" value="plateau" checked> <span>${T.aPlateau}</span></label>
+                                <label class="ml-radio"><input type="radio" name="aType" value="dilemma"> <span>${T.aDilemma}</span></label>
+                                <label class="ml-radio"><input type="radio" name="aType" value="limit"> <span>${T.aLimit}</span></label>
+                                <div class="ml-answer-fields">
+                                    <div class="full">
+                                        <label for="aThr" id="aThrLabel"></label>
+                                        <input class="ml-input" id="aThr" type="number" step="5" inputmode="numeric">
+                                    </div>
+                                </div>
+                                <button type="button" class="ml-btn ml-btn--primary" id="checkBtn">${T.check}</button>
+                                <p class="ml-note" id="fillNote" style="color:#fca5a5;margin:8px 0 0" hidden>${T.fill}</p>
                             </div>
-                        </div>
-                        <span class="ml-field-label" style="color:#cbd5e1">${T.aType}</span>
-                        <label class="ml-radio"><input type="radio" name="aType" value="plateau" checked> <span>${T.aPlateau}</span></label>
-                        <label class="ml-radio"><input type="radio" name="aType" value="dilemma"> <span>${T.aDilemma}</span></label>
-                        <label class="ml-radio"><input type="radio" name="aType" value="limit"> <span>${T.aLimit}</span></label>
-                        <div class="ml-answer-fields">
-                            <div class="full">
-                                <label for="aThr" id="aThrLabel"></label>
-                                <input class="ml-input" id="aThr" type="number" step="5" inputmode="numeric">
-                            </div>
-                        </div>
-                        <button type="button" class="ml-btn ml-btn--primary" id="checkBtn">${T.check}</button>
-                        <p class="ml-note" id="fillNote" style="color:#fca5a5;margin:8px 0 0" hidden>${T.fill}</p>
-                    </section>
-                    <section class="ml-panel">
-                        <h2><i class="fas fa-clipboard-check" aria-hidden="true"></i> ${T.feedback}</h2>
-                        <div id="feedback" aria-live="polite"></div>
-                    </section>
+                        </section>
+                        <section class="ml-panel">
+                            <h2><i class="fas fa-clipboard-check" aria-hidden="true"></i> ${T.feedback}</h2>
+                            <div id="feedback" aria-live="polite"></div>
+                        </section>
                     </div>
                 </div>
-                    <details class="ml-panel ml-rules">
-                        <summary>${T.method}</summary>
-                        ${T.methodBody}
-                    </details>
+                <details class="ml-panel ml-rules">
+                    <summary>${T.method}</summary>
+                    ${T.methodBody}
+                </details>
             </div>`;
 
         $('#scenario').addEventListener('change', e => {
-            const sc = PRESETS.find(p => p.id === e.target.value);
-            if (sc) loadScenario(sc);
+            const c = CASES.find(p => p.id === e.target.value);
+            if (c) loadCase(c);
         });
-        $('#rndAC').addEventListener('click', () => loadScenario(randomScenario('ac', state.transducer)));
-        $('#rndBC').addEventListener('click', () => loadScenario(randomScenario('bc', state.transducer)));
+        $('#rndBtn').addEventListener('click', () => loadCase(randomCase(state.transducer)));
         $('#transducer').addEventListener('click', e => {
             const btn = e.target.closest('button[data-type]');
             if (!btn || btn.dataset.type === state.transducer) return;
             state.transducer = btn.dataset.type;
-            resetRun();
+            resetCase();
         });
+        root.querySelectorAll('.ml-option').forEach(b => b.addEventListener('click', () => {
+            if (state.decided) return;
+            state.picks[b.dataset.key] = !state.picks[b.dataset.key];
+            renderDecide();
+        }));
+        $('#decideBtn').addEventListener('click', checkDecision);
         root.querySelectorAll('[data-tone]').forEach(b => b.addEventListener('click', () => setTone(state.tone + Number(b.dataset.tone))));
         root.querySelectorAll('[data-noise]').forEach(b => b.addEventListener('click', () => setNoise((state.noiseOn ? state.noise : 0) + Number(b.dataset.noise))));
         $('#toneSlider').addEventListener('input', e => setTone(Number(e.target.value)));
@@ -499,21 +592,41 @@
     }
 
     /* ---------- Actions ---------- */
-    function loadScenario(sc) {
-        state.scenario = sc;
-        state.transducer = sc.transducer;
-        resetRun();
+    function loadCase(c) {
+        state.caseData = c;
+        state.transducer = c.transducer;
+        resetCase();
     }
 
-    function resetRun() {
-        sol = solve(state.scenario, state.transducer);
+    function resetCase() {
+        state.steps = caseSteps(state.caseData, state.transducer);
+        state.phase = 'decide';
+        state.picks = {};
+        state.decided = false;
+        state.stepIdx = 0;
+        state.results = [];
+        // Before the decision the audiometer is locked; the chart shows the first step's scale.
+        const first = state.steps[0];
+        sol = first ? first.sol : solve(Object.assign({}, state.caseData, { test: 'R', mode: 'ac' }), state.transducer);
+        resetStep();
+    }
+
+    function goStep(i) {
+        state.phase = 'step';
+        state.stepIdx = i;
+        sol = state.steps[i].sol;
+        state.results[i] = null;
+        resetStep();
+    }
+
+    function resetStep() {
         state.tone = sol.unmasked === NR ? sol.toneMax : sol.unmasked;
         state.noise = 0;
         state.noiseOn = false;
         state.log = [];
         state.last = null;
         state.checked = false;
-        state.result = null;
+        if (state.phase === 'step') state.results[state.stepIdx] = null;
         ['aMbs', 'aOver', 'aThr'].forEach(id => {
             const input = $('#' + id);
             input.value = '';
@@ -541,6 +654,7 @@
     }
 
     function present() {
+        if (state.phase !== 'step') return;
         const heard = state.tone >= sol.thr(state.noiseOn ? state.noise : OFF);
         state.log.push({ m: state.noiseOn ? state.noise : null, l: state.tone, heard: heard });
         state.last = heard;
@@ -553,30 +667,42 @@
         drawChart();
     }
 
+    function checkDecision() {
+        state.decided = true;
+        renderDecide();
+        renderTask();
+        renderFeedback();
+    }
+
     function answerType() {
         return root.querySelector('input[name="aType"]:checked').value;
     }
 
     function syncAnswerFields() {
+        const st = current();
+        const bone = !!st && st.mode === 'bc';
         $('#aThr').disabled = answerType() !== 'plateau';
-        const overNA = sol.overTheory === null;
-        $('#aOver').disabled = overNA;
-        $('#aOver').placeholder = overNA ? '—' : '';
-        $('#aOver').title = overNA ? T.aOverNA : '';
+        $('#overWrap').hidden = !bone;
+        $('#overLater').hidden = bone;
+        $('#aOver').disabled = !bone || answerType() !== 'plateau';
     }
 
     function check() {
+        const st = current();
+        if (!st) return;
         const type = answerType();
+        const bone = st.mode === 'bc';
         const raw = { mbs: $('#aMbs').value.trim(), over: $('#aOver').value.trim(), thr: $('#aThr').value.trim() };
-        const missing = raw.mbs === '' || (sol.overTheory !== null && raw.over === '') || (type === 'plateau' && raw.thr === '');
+        const missing = raw.mbs === '' || (type === 'plateau' && (raw.thr === '' || (bone && raw.over === '')));
         $('#fillNote').hidden = !missing;
         if (missing) return;
 
         const res = { type: type === sol.type, mbs: Number(raw.mbs) === sol.mbs };
-        if (sol.overTheory !== null) res.over = Number(raw.over) === sol.overTheory;
         if (sol.type === 'plateau') res.thr = type === 'plateau' && Number(raw.thr) === sol.trueThr;
+        // Overmasking needs the masked bone threshold, so it is asked in the bone step only.
+        if (bone && sol.type === 'plateau' && type === 'plateau') res.over = Number(raw.over) === sol.overActual;
         state.checked = true;
-        state.result = res;
+        state.results[state.stepIdx] = { res: res, type: type, own: type === 'plateau' ? Number(raw.thr) : null };
 
         const mark = (id, ok) => {
             const input = $('#' + id);
@@ -594,15 +720,19 @@
 
     /* ---------- Rendering ---------- */
     function renderAll() {
-        const sc = state.scenario;
-        $('#scenario').value = sc.id;
+        $('#scenario').value = state.caseData.id;
         root.querySelectorAll('#transducer button').forEach(b => {
             b.setAttribute('aria-pressed', String(b.dataset.type === state.transducer));
         });
         $('#toneSlider').min = LIM.toneMin;
         $('#toneSlider').max = sol.toneMax;
-        $('#aThrLabel').textContent = T.aThr[sc.mode === 'ac' ? 0 : 1];
+        const st = current();
+        $('#decideForm').hidden = state.phase !== 'decide';
+        $('#stepForm').hidden = state.phase !== 'step';
+        $('#answerTitle').textContent = st ? `${T.answer} · ${stepName(st)}` : T.decideTitle;
+        if (st) $('#aThrLabel').textContent = T.aThr[st.mode === 'ac' ? 0 : 1];
         syncAnswerFields();
+        renderDecide();
         renderTask();
         renderStrip();
         renderAudiometer();
@@ -611,73 +741,114 @@
         renderFeedback();
     }
 
+    function renderDecide() {
+        const need = state.caseData && needsOf(state.caseData, state.transducer).need;
+        root.querySelectorAll('.ml-option').forEach(btn => {
+            const k = btn.dataset.key;
+            const sel = !!state.picks[k];
+            btn.setAttribute('aria-pressed', String(sel));
+            btn.disabled = state.decided;
+            btn.classList.toggle('res-correct', state.decided && sel === need[k] && need[k]);
+            btn.classList.toggle('res-incorrect', state.decided && sel !== need[k]);
+            btn.querySelector('i').className = sel ? 'fas fa-square-check' : 'far fa-square';
+        });
+        $('#decideBtn').disabled = state.decided;
+    }
+
+    function maskedCell(ear, mode) {
+        const i = state.steps.findIndex(s => s.ear === ear && s.mode === mode);
+        if (i === -1) return '—';
+        const r = state.results[i];
+        if (!r) return '?';
+        const s = state.steps[i].sol;
+        if (s.type === 'plateau') return String(s.trueThr);
+        if (s.trueThr === NR) return fmtDb(NR);
+        return T.dilemmaShort;
+    }
+
     function renderTask() {
-        const sc = state.scenario;
+        const c = state.caseData;
+        const st = current();
+        const n = needsOf(c, state.transducer);
         const row = (label, r, l) => `<tr><td>${label}</td><td class="ml-ear-r">${r}</td><td class="ml-ear-l">${l}</td></tr>`;
-        // The masked bone threshold is part of the answer, so it shows only after checking
-        const maskedBcText = state.checked ? fmtDb(sol.teBcKnown ? sol.te.bc : NR) : '?';
-        const maskedBc = sc.mode === 'ac'
-            ? row(T.rowBCm, sc.test === 'R' ? maskedBcText : '—', sc.test === 'L' ? maskedBcText : '—')
-            : '';
+        const showMasked = state.phase === 'step';
+        const chips = [`<li class="${state.phase === 'decide' ? 'is-active' : 'is-done'}">1 · ${T.stepDecide}</li>`]
+            .concat(state.steps.map((s, i) => {
+                const cls = state.phase !== 'step' ? '' : i < state.stepIdx || (i === state.stepIdx && state.checked) ? 'is-done' : i === state.stepIdx ? 'is-active' : '';
+                const label = state.decided ? stepName(s) : '?';
+                return `<li class="${cls}">${i + 2} · ${label}</li>`;
+            }));
         $('#task').innerHTML = `
+            <ol class="ml-stepper">${state.decided ? chips.join('') : chips[0]}</ol>
             <dl>
-                <dt>${T.tFreq}</dt><dd>${sc.freq} Hz</dd>
-                <dt>${T.tTest}</dt><dd><span class="${earClass(sc.test)}">${T.earCap[sc.test]}</span> · ${T.modeLow[sc.mode]}</dd>
-                <dt>${T.tMask}</dt><dd><span class="${earClass(sol.other)}">${T.maskTo(T.earCap[sol.other])}</span></dd>
+                <dt>${T.tFreq}</dt><dd>${c.freq} Hz</dd>
                 <dt>${T.tPhone}</dt><dd>${T.phone[state.transducer]}</dd>
+                ${st ? `<dt>${T.tTest}</dt><dd><span class="${earClass(st.ear)}">${T.earCap[st.ear]}</span> · ${T.modeLow[st.mode]}</dd>
+                <dt>${T.tMask}</dt><dd><span class="${earClass(sol.other)}">${T.maskTo(T.earCap[sol.other])}</span></dd>` : `<dt>${T.tTest}</dt><dd>${T.decideFirst}</dd>`}
             </dl>
             <table class="ml-thr-table">
                 <thead><tr><th>${T.thrTitle}</th><th class="ml-ear-r">${T.earCap.R}</th><th class="ml-ear-l">${T.earCap.L}</th></tr></thead>
                 <tbody>
-                    ${row(T.rowAC, fmtDb(sol.acUnm.R), fmtDb(sol.acUnm.L))}
-                    ${row(T.rowBC, fmtDb(sol.bcUnm), fmtDb(sol.bcUnm))}
-                    ${maskedBc}
+                    ${row(T.rowAC, fmtDb(n.acUnm.R), fmtDb(n.acUnm.L))}
+                    ${row(T.rowBC, fmtDb(n.bcUnm), fmtDb(n.bcUnm))}
+                    ${showMasked ? row(T.rowACm, maskedCell('R', 'ac'), maskedCell('L', 'ac')) : ''}
+                    ${showMasked ? row(T.rowBCm, maskedCell('R', 'bc'), maskedCell('L', 'bc')) : ''}
                 </tbody>
-            </table>
-            ${sol.needed ? '' : `<div class="ml-warnbox">${T.notNeeded}</div>`}`;
+            </table>`;
     }
 
     function renderStrip() {
-        const sc = state.scenario;
+        const c = state.caseData;
+        const n = needsOf(c, state.transducer);
         const symbols = [];
         const add = (kind, db, extra) => symbols.push(Object.assign(db === NR ? { kind: kind, nr: true } : { kind: kind, db: db }, extra));
-        const maskedKind = (sc.mode === 'ac' ? 'acm' : 'bcm') + sc.test;
-        // Masked thresholds stay hidden until the student checks the answer; then the true
-        // values appear pale so they can be compared with the student's own marking.
-        const faint = { faint: true };
-        if (sol.bcUnm !== NR) { add('bcR', sol.bcUnm); add('bcL', sol.bcUnm); }
-        if (sc.mode === 'ac' && state.checked) add('bcm' + sc.test, sol.teBcKnown ? sol.te.bc : NR, faint);
-        add('acR', sol.acUnm.R);
-        add('acL', sol.acUnm.L);
-
-        // The student's own masked threshold, drawn solid as soon as it is entered
-        const own = $('#aThr').value.trim();
-        const showOwn = own !== '' && !$('#aThr').disabled && !isNaN(Number(own));
-        if (showOwn) add(maskedKind, Math.max(LIM.toneMin, Math.min(sol.toneMax, Number(own))));
-
-        const reveal = state.checked && (sol.type === 'plateau' || sol.trueThr === NR);
-        if (reveal) add(maskedKind, sol.trueThr, faint);
-
-        // Current stimulus level
-        if (!state.checked) add('stim' + sc.test, state.tone, { bone: sc.mode === 'bc' });
-
-        drawStrip($('#strip'), { labels: { right: T.earCap.R.toUpperCase(), left: T.earCap.L.toUpperCase() }, symbols: symbols, fontScale: 1.8 });
-        $('#stripFreq').textContent = '· ' + sc.freq + ' Hz';
-
         const glyph = { acR: 'O', acL: 'X', bcR: '&lt;', bcL: '&gt;', acmR: '△', acmL: '□', bcmR: '[', bcmL: ']' };
         const item = (k, text, cls) => `<span${cls ? ` class="${cls}"` : ''}><b class="${k.slice(-1) === 'R' ? 'r' : 'l'}">${glyph[k] || '◯'}</b>${text}</span>`;
         const items = ['acR', 'bcR', 'acL', 'bcL'].map(k => item(k, T.legend[k]));
-        if (!state.checked) items.push(item('stim' + sc.test, T.lgStim, 'is-faint'));
-        if (showOwn) items.push(item(maskedKind, T.legend[maskedKind] + ' · ' + T.lgOwn));
-        if (state.checked && sc.mode === 'ac') items.push(item('bcm' + sc.test, T.legend['bcm' + sc.test] + ' · ' + T.lgTrue, 'is-faint'));
-        if (reveal) items.push(item(maskedKind, T.legend[maskedKind] + ' · ' + T.lgTrue, 'is-faint'));
+
+        if (n.bcUnm !== NR) { add('bcR', n.bcUnm); add('bcL', n.bcUnm); }
+        add('acR', n.acUnm.R);
+        add('acL', n.acUnm.L);
+
+        // Masked thresholds: the student's own value solid, the true value pale once checked.
+        if (state.phase === 'step') {
+            state.steps.forEach((s, i) => {
+                if (i > state.stepIdx) return;
+                const kind = (s.mode === 'ac' ? 'acm' : 'bcm') + s.ear;
+                const r = state.results[i];
+                let own = null;
+                if (r) own = r.own;
+                else if (i === state.stepIdx) {
+                    const v = $('#aThr').value.trim();
+                    if (v !== '' && !$('#aThr').disabled && !isNaN(Number(v))) own = Number(v);
+                }
+                const exact = !!r && own !== null && own === s.sol.trueThr;
+                if (own !== null) {
+                    add(kind, Math.max(LIM.toneMin, Math.min(s.sol.toneMax, own)));
+                    items.push(item(kind, `${T.legend[kind]} · ${exact ? T.lgOwnOk : T.lgOwn}`));
+                }
+                if (r && !exact && (s.sol.type === 'plateau' || s.sol.trueThr === NR)) {
+                    add(kind, s.sol.trueThr, { faint: true });
+                    items.push(item(kind, `${T.legend[kind]} · ${T.lgTrue}`, 'is-faint'));
+                }
+            });
+            const st = current();
+            if (!state.checked) {
+                add('stim' + st.ear, state.tone, { bone: st.mode === 'bc' });
+                items.push(item('stim' + st.ear, T.lgStim, 'is-faint'));
+            }
+        }
+
+        drawStrip($('#strip'), { labels: { right: T.earCap.R.toUpperCase(), left: T.earCap.L.toUpperCase() }, symbols: symbols, fontScale: 1.8 });
+        $('#stripFreq').textContent = '· ' + c.freq + ' Hz';
         $('#stripLegend').innerHTML = items.join('');
     }
 
     function renderAudiometer() {
-        const sc = state.scenario;
-        $('#toneTarget').innerHTML = `<span class="${earClass(sc.test)}">${T.toneTo(T.earCap[sc.test], T.modeLow[sc.mode])}</span>`;
-        $('#noiseTarget').innerHTML = `<span class="${earClass(sol.other)}">${T.noiseTo(T.earCap[sol.other])}</span>`;
+        const st = current();
+        const locked = !st;
+        $('#toneTarget').innerHTML = st ? `<span class="${earClass(st.ear)}">${T.toneTo(T.earCap[st.ear], T.modeLow[st.mode])}</span>` : '—';
+        $('#noiseTarget').innerHTML = st ? `<span class="${earClass(sol.other)}">${T.noiseTo(T.earCap[sol.other])}</span>` : '—';
         $('#toneLevel').innerHTML = `${state.tone}<small>dB HL</small>`;
         $('#toneSlider').value = state.tone;
         const noiseLevel = $('#noiseLevel');
@@ -685,13 +856,18 @@
         noiseLevel.innerHTML = state.noiseOn ? `${state.noise}<small>dB</small>` : T.off;
         $('#noiseSlider').value = state.noiseOn ? state.noise : 0;
         $('#noiseToggle').textContent = state.noiseOn ? T.noiseOff : T.noiseOn;
-        root.querySelector('[data-tone="-5"]').disabled = state.tone <= LIM.toneMin;
-        root.querySelector('[data-tone="5"]').disabled = state.tone >= sol.toneMax;
+        root.querySelectorAll('#meter button, #meter input').forEach(el => { el.disabled = locked; });
+        if (!locked) {
+            root.querySelector('[data-tone="-5"]').disabled = state.tone <= LIM.toneMin;
+            root.querySelector('[data-tone="5"]').disabled = state.tone >= sol.toneMax;
+        }
+        $('#meter').classList.toggle('is-locked', locked);
 
         const lamp = $('#lamp');
         lamp.classList.toggle('is-yes', state.last === true);
         lamp.classList.toggle('is-no', state.last === false);
-        if (state.last === null) lamp.innerHTML = `<i class="far fa-circle" aria-hidden="true"></i> ${T.lampIdle}`;
+        if (!st) lamp.innerHTML = `<i class="fas fa-lock" aria-hidden="true"></i> ${T.lampLocked}`;
+        else if (state.last === null) lamp.innerHTML = `<i class="far fa-circle" aria-hidden="true"></i> ${T.lampIdle}`;
         else if (state.last) lamp.innerHTML = `<i class="fas fa-hand" aria-hidden="true"></i> ${T.lampYes}`;
         else lamp.innerHTML = `<i class="fas fa-ban" aria-hidden="true"></i> ${T.lampNo}`;
     }
@@ -804,20 +980,23 @@
             (showSol && sol.type === 'plateau' ? `<span><b style="color:#86efac">■</b>${T.lgBand}</span>` : '');
     }
 
+
     function renderFeedback() {
         const box = $('#feedback');
+        if (state.phase === 'decide') { renderDecisionFeedback(box); return; }
         if (!state.checked) {
             box.innerHTML = `<div class="ml-placeholder"><i class="far fa-clock" aria-hidden="true"></i><p>${T.waiting}</p></div>`;
             return;
         }
-        const sc = state.scenario;
-        const res = state.result;
+        const st = current();
+        const c = state.caseData;
+        const res = state.results[state.stepIdx].res;
         const items = [];
         const add = (key, ok, correct) => items.push(
             `<li><i class="fas ${ok ? 'fa-check ok' : 'fa-xmark bad'}" aria-hidden="true"></i>
                  <span>${T.item[key]}: ${ok ? '' : T.correctIs + ' '}<b>${correct}</b></span></li>`);
         add('mbs', res.mbs, sol.mbs + ' dB');
-        if (sol.overTheory !== null) add('over', res.over, sol.overTheory + ' dB');
+        if (res.over !== undefined) add('over', res.over, sol.overActual + ' dB');
         add('type', res.type, T.typeName[sol.type]);
         if (sol.type === 'plateau') add('thr', res.thr, sol.trueThr + ' dB HL');
         const wrong = Object.keys(res).filter(k => res[k] === false).length;
@@ -825,17 +1004,23 @@
         // Explanation
         const ex = [];
         const nteAc = sol.acUnm[sol.other];
-        if (sc.mode === 'ac') {
+        if (st.mode === 'ac') {
             ex.push(T.exMbsAC(nteAc, sol.mbs));
-            ex.push(sol.teBcKnown
-                ? T.exOverAC(sol.te.bc, sol.ia, sol.overTheory) + (sol.overTheory > LIM.noiseMax ? T.exLimitNoise(LIM.noiseMax) : '')
-                : T.exOverACna);
+            ex.push(T.exOverLater);
         } else {
-            const why = sol.nteGap > 10 ? T.oeWhy.gap : T.oeWhy[state.transducer](sc.freq, sol.oe);
+            const why = sol.nteGap > 10 ? T.oeWhy.gap : T.oeWhy[state.transducer](c.freq, sol.oe);
             ex.push(T.exMbsBC(nteAc, sol.oe, sol.mbs, why));
-            let over = T.exOverBC(sol.bcUnm, sol.ia, sol.overTheory);
-            if (sol.type === 'plateau' && sol.overActual !== sol.overTheory) over += ' ' + T.exOverBCactual(sol.te.bc, sol.ia, sol.overActual);
-            ex.push(over);
+            if (sol.trueThr === NR) ex.push(T.exOverACna);
+            else {
+                let over = T.exOverBone(sol.trueThr, sol.ia, sol.overActual) + (sol.overActual > LIM.noiseMax ? T.exLimitNoise(LIM.noiseMax) : '');
+                // The same limit applies to the air-conduction step of this ear, done earlier.
+                const airStep = state.steps.find(s => s.ear === st.ear && s.mode === 'ac');
+                if (airStep && sol.type === 'plateau') {
+                    const a = airStep.sol;
+                    over += ' ' + (a.type === 'plateau' ? T.exAirCheck(a.first, a.last, sol.overActual) : T.exAirCheckNo);
+                }
+                ex.push(over);
+            }
         }
         if (sol.type === 'plateau') {
             ex.push(sol.trueThr === sol.unmasked ? T.exNoShift(sol.trueThr) : T.exShadow(sol.trueThr, sol.unmasked, sol.first));
@@ -850,6 +1035,7 @@
             ex.push(T.exNoiseLimit(LIM.noiseMax));
         }
 
+        const last = state.stepIdx === state.steps.length - 1;
         box.innerHTML = `
             <div class="ml-alert ${wrong === 0 ? 'ml-alert--ok' : 'ml-alert--warn'}">
                 <i class="fas ${wrong === 0 ? 'fa-circle-check' : 'fa-triangle-exclamation'}" aria-hidden="true"></i>
@@ -860,19 +1046,56 @@
                 <h3>${T.solution}</h3>
                 <ul>${ex.map(e => `<li>${e}</li>`).join('')}</ul>
             </div>
+            ${last ? `<p class="ml-note" style="margin-top:12px"><b>${T.caseDone}</b></p>` : ''}
             <div class="ml-btn-row" style="margin-top:14px">
                 <button type="button" class="ml-btn" id="retryBtn"><i class="fas fa-rotate-left" aria-hidden="true"></i> ${T.retry}</button>
-                <button type="button" class="ml-btn" id="nextBtn">${T.next} <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+                <button type="button" class="ml-btn" id="nextBtn">${last ? T.nextCase : T.nextStep(stepName(state.steps[state.stepIdx + 1]))} <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
             </div>`;
-        $('#retryBtn').addEventListener('click', resetRun);
-        $('#nextBtn').addEventListener('click', () => {
-            if (sc.id === 'RND') { loadScenario(randomScenario(sc.mode, state.transducer)); return; }
-            loadScenario(PRESETS[(PRESETS.indexOf(sc) + 1) % PRESETS.length]);
-        });
+        $('#retryBtn').addEventListener('click', resetStep);
+        $('#nextBtn').addEventListener('click', () => (last ? nextCase() : goStep(state.stepIdx + 1)));
     }
 
-    window.MLPlateau = { PRESETS: PRESETS, solve: solve, randomScenario: randomScenario, NR: NR, OFF: OFF };
+    function renderDecisionFeedback(box) {
+        if (!state.decided) {
+            box.innerHTML = `<div class="ml-placeholder"><i class="far fa-clock" aria-hidden="true"></i><p>${T.decideWaiting}</p></div>`;
+            return;
+        }
+        const n = needsOf(state.caseData, state.transducer);
+        const wrong = KEYS.filter(k => !!state.picks[k] !== n.need[k]).length;
+        const rules = KEYS.map(k => {
+            const ear = k[0], mode = k.slice(1);
+            const a = n.acUnm[ear], b = n.bcUnm;
+            const ok = !!state.picks[k] === n.need[k];
+            const icon = `<i class="fas ${ok ? 'fa-check ok' : 'fa-xmark bad'}" aria-hidden="true"></i>`;
+            const text = (a === NR || b === NR)
+                ? T.ruleNA(T.opt[k])
+                : mode === 'ac' ? T.ruleAir(T.earCap[ear], a, b, a - b, n.ia, n.need[k]) : T.ruleBone(T.earCap[ear], a, b, a - b, n.need[k]);
+            return `<li>${icon}<span>${text}</span></li>`;
+        });
+        const has = state.steps.length > 0;
+        box.innerHTML = `
+            <div class="ml-alert ${wrong === 0 ? 'ml-alert--ok' : 'ml-alert--warn'}">
+                <i class="fas ${wrong === 0 ? 'fa-circle-check' : 'fa-triangle-exclamation'}" aria-hidden="true"></i>
+                <span>${wrong === 0 ? T.decideOk : T.fbBad(wrong)}</span>
+            </div>
+            <ul class="ml-check-list">${rules.join('')}</ul>
+            <div class="ml-explain">
+                <ul><li>${has ? T.orderNote(state.steps.map(stepName).join(' → ')) : T.noMasking}</li></ul>
+            </div>
+            <div class="ml-btn-row" style="margin-top:14px">
+                <button type="button" class="ml-btn" id="nextBtn">${has ? T.startMasking : T.nextCase} <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+            </div>`;
+        $('#nextBtn').addEventListener('click', () => (has ? goStep(0) : nextCase()));
+    }
+
+    function nextCase() {
+        const c = state.caseData;
+        if (c.id === 'RND') { loadCase(randomCase(state.transducer)); return; }
+        loadCase(CASES[(CASES.indexOf(c) + 1) % CASES.length]);
+    }
+
+    window.MLPlateau = { CASES: CASES, solve: solve, needsOf: needsOf, caseSteps: caseSteps, randomCase: randomCase, NR: NR, OFF: OFF };
 
     build();
-    loadScenario(PRESETS[0]);
+    loadCase(CASES[0]);
 })();
