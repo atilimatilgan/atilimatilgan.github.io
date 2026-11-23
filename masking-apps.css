@@ -1098,3 +1098,44 @@
 .ml-legend .is-faint {
     opacity: 0.55;
 }
+
+/* Plateau app: step list of a case (decision → air → bone) */
+.ml-stepper {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 12px;
+    padding: 0;
+}
+
+.ml-stepper li {
+    font-size: calc(0.75rem * var(--ml-fs, 1));
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--ml-line);
+    background: #fff;
+    color: var(--ml-muted);
+}
+
+.ml-stepper li.is-active {
+    background: #1e3a8a;
+    border-color: #1e3a8a;
+    color: #fff;
+}
+
+.ml-stepper li.is-done {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #14532d;
+}
+
+/* Audiometer locked until the masking decision is made */
+#meter.is-locked .ml-audiometer {
+    opacity: 0.5;
+}
+
+.ml-option:disabled {
+    cursor: default;
+}
