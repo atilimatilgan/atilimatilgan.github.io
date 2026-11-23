@@ -104,6 +104,9 @@
     /* opts: { labels: {right, left}, symbols: [{kind, db, nr}], dims: [{slot, from, to, label, caption, color, active}] }
        kind: acR | acL | bcR | bcL (unmasked), acmR | acmL | bcmR | bcmL (masked) */
     function drawStrip(svgEl, opts) {
+        // fontScale > 1 (plateau app, for projection) enlarges the text and moves the
+        // ear labels over their own half so they cannot collide with "dB HL".
+        const fs = opts.fontScale || 1;
         svgEl.setAttribute('viewBox', `0 0 ${G.w} ${G.h}`);
         svgEl.replaceChildren();
 
@@ -119,14 +122,21 @@
                     stroke: db === 0 ? '#cbd5e1' : '#eef2f7', 'stroke-width': db === 0 ? 1.4 : 1
                 }));
             }
-            svgEl.appendChild(svg('text', { x: G.left - 6, y: y + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#94a3b8' }, String(db)));
+            svgEl.appendChild(svg('text', { x: G.left - 6, y: y + 4 * fs, 'text-anchor': 'end', 'font-size': 11 * fs, fill: fs > 1 ? '#64748b' : '#94a3b8' }, String(db)));
         }
         svgEl.appendChild(svg('line', { x1: CX, x2: CX, y1: G.top, y2: G.h - G.bottom, stroke: '#cbd5e1', 'stroke-width': 1 }));
-        svgEl.appendChild(svg('text', { x: G.left - 6, y: 13, 'text-anchor': 'end', 'font-size': 10, fill: '#94a3b8' }, 'dB HL'));
-
-        if (opts.labels) {
-            svgEl.appendChild(svg('text', { x: G.left + 4, y: 13, 'font-size': 12, 'font-weight': 700, fill: RED }, opts.labels.right));
-            svgEl.appendChild(svg('text', { x: G.w - G.right - 4, y: 13, 'text-anchor': 'end', 'font-size': 12, 'font-weight': 700, fill: BLUE }, opts.labels.left));
+        if (fs > 1) {
+            svgEl.appendChild(svg('text', { x: 2, y: G.top - 10, 'font-size': 10 * fs, fill: '#64748b' }, 'dB HL'));
+            if (opts.labels) {
+                svgEl.appendChild(svg('text', { x: (G.left + CX) / 2 + 10, y: G.top - 10, 'text-anchor': 'middle', 'font-size': 12 * fs, 'font-weight': 700, fill: RED }, opts.labels.right));
+                svgEl.appendChild(svg('text', { x: (CX + G.w - G.right) / 2, y: G.top - 10, 'text-anchor': 'middle', 'font-size': 12 * fs, 'font-weight': 700, fill: BLUE }, opts.labels.left));
+            }
+        } else {
+            svgEl.appendChild(svg('text', { x: G.left - 6, y: 13, 'text-anchor': 'end', 'font-size': 10, fill: '#94a3b8' }, 'dB HL'));
+            if (opts.labels) {
+                svgEl.appendChild(svg('text', { x: G.left + 4, y: 13, 'font-size': 12, 'font-weight': 700, fill: RED }, opts.labels.right));
+                svgEl.appendChild(svg('text', { x: G.w - G.right - 4, y: 13, 'text-anchor': 'end', 'font-size': 12, 'font-weight': 700, fill: BLUE }, opts.labels.left));
+            }
         }
         (opts.dims || []).forEach(function (dim) { drawDim(svgEl, dim); });
         (opts.symbols || []).forEach(function (sym) { drawSymbol(svgEl, sym); });
